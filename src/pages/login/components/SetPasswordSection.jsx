@@ -36,11 +36,11 @@ const SetPasswordSection = ({ onComplete }) => {
   const isFormValid = metCount === 3 && passwordsMatch && password !== '';
 
   return (
-    <div className="flex-grow w-full flex flex-col p-6 lg:px-16 lg:py-8 overflow-y-auto animate-slide-in-right">
-      <div className="max-w-lg mx-auto w-full flex-grow flex flex-col justify-center">
-        <div className="mb-6">
-          <h1 className="text-neutral-800 text-[32px] font-bold mb-1 tracking-tight">Set a new password</h1>
-          <p className="text-neutral-500 text-sm font-normal leading-relaxed">
+    <div className="flex-grow w-full flex flex-col p-6 lg:px-20 lg:py-8 overflow-y-auto animate-slide-in-right">
+      <div className="max-w-lg mx-auto w-full flex-grow flex flex-col justify-center lg:justify-start lg:pt-8">
+        <div className="mb-8">
+          <h1 className="text-neutral-800 text-[28px] lg:text-[32px] font-bold mb-1 tracking-tight">Set a new password</h1>
+          <p className="text-neutral-500 text-[15px] lg:text-base font-normal leading-relaxed max-w-xs">
             Your new password must be at least 8 characters and include a number.
           </p>
         </div>

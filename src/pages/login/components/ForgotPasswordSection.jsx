@@ -6,9 +6,9 @@ const ForgotPasswordSection = ({ onBack, onSendCode }) => {
   const [phoneNumber, setPhoneNumber] = useState('');
 
   return (
-    <div className="flex-grow w-full flex flex-col p-6 lg:px-16 lg:py-8 overflow-y-auto animate-slide-in-right">
+    <div className="flex-grow w-full flex flex-col p-6 lg:px-20 lg:py-8 overflow-y-auto animate-slide-in-right">
       {/* Back Button */}
-      <div className="flex justify-start mb-4">
+      <div className="flex justify-start mb-6">
         <button 
           onClick={onBack}
           className="flex items-center gap-2 text-neutral-400 hover:text-neutral-600 transition-colors group"
@@ -18,10 +18,10 @@ const ForgotPasswordSection = ({ onBack, onSendCode }) => {
         </button>
       </div>
 
-      <div className="max-w-lg mx-auto w-full flex-grow flex flex-col">
-        <div className="mb-6">
-          <h1 className="text-neutral-800 text-[32px] font-bold mb-1 tracking-tight">Forgot password?</h1>
-          <p className="text-neutral-500 text-sm font-normal leading-relaxed">
+      <div className="max-w-lg mx-auto w-full flex-grow flex flex-col justify-center lg:justify-start lg:pt-4">
+        <div className="mb-8">
+          <h1 className="text-neutral-800 text-[28px] lg:text-[32px] font-bold mb-1 tracking-tight">Forgot password?</h1>
+          <p className="text-neutral-500 text-[15px] lg:text-base font-normal leading-relaxed">
             Enter the phone number linked to your account and we will send a 6-digit reset code.
           </p>
         </div>

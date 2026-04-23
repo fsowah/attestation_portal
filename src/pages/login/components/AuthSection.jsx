@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import 'react-phone-number-input/style.css';
 import PhoneInput from 'react-phone-number-input';
+import { useNavigate } from 'react-router-dom';
 import VerificationSection from './VerificationSection';
 import LoginSection from './LoginSection';
 import ForgotPasswordSection from './ForgotPasswordSection';
@@ -9,17 +10,21 @@ import SetPasswordSection from './SetPasswordSection';
 const imgHelpCircle = "http://localhost:3845/assets/8bff9de17499bf9f8b76cd0629aa6c554ff7d243.svg";
 
 const AuthSection = () => {
+  const navigate = useNavigate();
   const [view, setView] = useState('welcome'); // 'welcome', 'signup', 'signin', 'otp', 'forgotpassword', 'setpassword'
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [phoneNumber, setPhoneNumber] = useState('');
 
-  const goToSignUp = () => setView('signup');
-  const goToWelcome = () => setView('welcome');
-  const goToSignIn = () => setView('signin');
-  const goToOtp = () => setView('otp');
-  const goToForgotPassword = () => setView('forgotpassword');
-  const goToSetPassword = () => setView('setpassword');
+  const goToSignUp = () => { setView('signup'); setIsMenuOpen(false); };
+  const goToWelcome = () => { setView('welcome'); setIsMenuOpen(false); };
+  const goToSignIn = () => { setView('signin'); setIsMenuOpen(false); };
+  const goToOtp = () => { setView('otp'); setIsMenuOpen(false); };
+  const goToForgotPassword = () => { setView('forgotpassword'); setIsMenuOpen(false); };
+  const goToSetPassword = () => { setView('setpassword'); setIsMenuOpen(false); };
+  const goToDashboard = () => { navigate('/dashboard'); };
   const togglePassword = () => setShowPassword(!showPassword);
+  const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
 
   return (
     <div className="relative h-full w-full bg-white overflow-hidden">
@@ -36,8 +41,74 @@ const AuthSection = () => {
       </div>
 
       <div className="relative z-10 h-full w-full flex flex-col">
-        {/* Persistent Top Header Section */}
-        <div className="px-12 lg:px-20 pt-12 lg:pt-16 flex justify-end items-center gap-10 shrink-0">
+        {/* Unified Mobile Header (Expandable) */}
+        <div
+          className={`lg:hidden relative shrink-0 transition-all duration-500 ease-in-out overflow-hidden z-50 ${isMenuOpen ? 'pb-12 rounded-b-[32px]' : 'pb-4 rounded-b-[24px]'
+            }`}
+        >
+          {/* Gradient Background */}
+          <div className="absolute inset-0 bg-gradient-to-b from-[#0d1f36] to-[#0c4fa5]" />
+
+          {/* Header Content */}
+          <div className="relative z-10">
+            <div className="px-6 pt-10 flex justify-between items-center mb-6">
+              <div className="flex items-center gap-3">
+                <img
+                  src="http://localhost:3845/assets/b2bdf8f7c8828484728deaa27435bbdd1780dafc.png"
+                  alt="Logo"
+                  className="h-8 w-auto object-contain"
+                />
+                <span className="text-white font-medium text-[15px]">Ministry of Foreign Affairs</span>
+              </div>
+              <button onClick={toggleMenu} className="p-2 text-white">
+                {isMenuOpen ? (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M18 6L6 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                ) : (
+                  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M3 12H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M3 6H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                    <path d="M3 18H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
+                )}
+              </button>
+            </div>
+
+            {/* Expandable Menu Items */}
+            <div
+              className={`px-8 space-y-6 transition-all duration-500 ease-in-out ${isMenuOpen ? 'opacity-100 max-h-96' : 'opacity-0 max-h-0'
+                }`}
+            >
+              <div
+                onClick={() => { console.log('Help clicked'); setIsMenuOpen(false); }}
+                className="flex items-center gap-4 text-white/90 cursor-pointer"
+              >
+                <div className="w-9 h-9 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
+                  <img src={imgHelpCircle} alt="Help" className="w-3.5 h-3.5 invert" />
+                </div>
+                <span className="font-bold text-base">Help Center</span>
+              </div>
+              <div
+                onClick={() => { console.log('Track clicked'); setIsMenuOpen(false); }}
+                className="flex items-center gap-4 text-white/90 cursor-pointer"
+              >
+                <div className="w-9 h-9 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="text-brand-gold-500">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
+                    <circle cx="12" cy="10" r="3" />
+                  </svg>
+                </div>
+                <span className="font-bold text-base text-brand-gold-500">Track my application</span>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        {/* Persistent Desktop Top Header Section */}
+        <div className="hidden lg:flex px-12 lg:px-20 pt-12 lg:pt-16 justify-end items-center gap-10 shrink-0">
           <div className="flex items-center gap-2 cursor-pointer group">
             <div className="w-6 h-6 rounded-full border border-neutral-300 flex items-center justify-center">
               <img src={imgHelpCircle} alt="Help" className="w-3 h-3 opacity-60" />
@@ -45,54 +116,51 @@ const AuthSection = () => {
             <span className="text-neutral-800 font-semibold text-sm">Help</span>
           </div>
           <div className="cursor-pointer">
-            <span className="text-brand-gold-800 font-bold text-sm">
-              Track my application
-            </span>
+            <span className="text-brand-gold-800 font-bold text-sm">Track my application</span>
           </div>
         </div>
-
         {view === 'welcome' && (
-          <div className="flex-grow w-full flex flex-col p-6 lg:px-16 lg:py-8 overflow-y-auto animate-in fade-in duration-500">
+          <div className="flex-grow w-full flex flex-col p-6 lg:px-20 overflow-y-auto">
             {/* Main Content */}
-            <div className="max-w-lg mx-auto w-full flex-grow flex flex-col justify-center">
-              <div className="mb-6">
-                <h1 className="text-neutral-800 text-[32px] font-bold mb-1 tracking-tight">Welcome</h1>
-                <p className="text-neutral-500 text-sm font-medium leading-relaxed">
+            <div className="max-w-lg mx-auto w-full flex-grow flex flex-col justify-center lg:justify-start lg:pt-12">
+              <div className="mb-10 lg:mb-12 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+                <h1 className="flex text-neutral-800 text-[36px] font-black mb-2 tracking-tight">Welcome</h1>
+                <p className="text-neutral-500 text-[15px] lg:text-base font-normal leading-relaxed max-w-sm">
                   Sign in or create an account to begin your attestation request.
                 </p>
               </div>
 
-              <div className="flex flex-col gap-3 mb-6">
-                <button 
+              <div className="flex flex-col gap-4 mb-10 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+                <button
                   onClick={goToSignUp}
-                  className="w-full h-11 bg-brand-gold-500 hover:bg-brand-gold-700 text-brand-navy-700 font-bold text-sm rounded-lg transition-all shadow-sm"
+                  className="w-full h-11 lg:h-12 bg-brand-gold-500 hover:bg-brand-gold-700 text-brand-navy-700 font-bold text-sm lg:text-base rounded-lg transition-all shadow-sm hover:scale-[1.01] active:scale-[0.99]"
                 >
                   Create an account
                 </button>
-                <button 
+                <button
                   onClick={goToSignIn}
-                  className="w-full h-11 bg-white border border-brand-navy-800 hover:bg-neutral-50 text-brand-navy-800 font-bold text-sm rounded-lg transition-all"
+                  className="w-full h-11 lg:h-12 bg-white  border border-brand-navy-800 hover:bg-neutral-50 text-brand-navy-800 font-bold text-sm lg:text-base rounded-lg transition-all hover:scale-[1.01] active:scale-[0.99]"
                 >
                   Sign in to existing account
                 </button>
               </div>
 
-              <div className="w-full h-px bg-neutral-100 mb-5" />
+              <div className="w-full h-px bg-neutral-100 mb-8 animate-slow-fade-in" style={{ animationDelay: '0.3s' }} />
 
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-neutral-500 font-bold text-sm mb-1 tracking-tight">
+              <div className="space-y-8 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+                <div className="space-y-2">
+                  <h3 className="text-neutral-500 font-bold text-[13px] lg:text-sm uppercase tracking-wider">
                     Already submitted an application?
                   </h3>
-                  <p className="text-neutral-400 text-[13px] leading-relaxed font-medium">
+                  <p className="text-neutral-400 text-[13px] lg:text-sm leading-relaxed font-normal">
                     Sign in to track your documents and manage your scheduled appointment.
                   </p>
                 </div>
-                <div>
-                  <h3 className="text-neutral-500 font-bold text-sm mb-1 tracking-tight">
+                <div className="hidden lg:block space-y-2">
+                  <h3 className="text-neutral-500 font-bold text-[13px] lg:text-sm uppercase tracking-wider">
                     New to the portal?
                   </h3>
-                  <p className="text-neutral-400 text-[13px] leading-relaxed font-medium">
+                  <p className="text-neutral-400 text-[13px] lg:text-sm leading-relaxed font-normal">
                     Create an account. You will need your Ghana Card number and mobile number to register.
                   </p>
                 </div>
@@ -100,18 +168,18 @@ const AuthSection = () => {
             </div>
 
             {/* Footer */}
-            <div className="flex flex-col sm:flex-row justify-between items-center text-neutral-400 text-[10px] mt-6 gap-4 shrink-0">
-              <p className="font-bold">attestation.mfa.gov.gh</p>
-              <p className="font-bold uppercase tracking-wider">© 2026 Ministry of Foreign Affairs, Ghana</p>
+            <div className="flex flex-col items-center text-neutral-400 text-[10px] mt-10 gap-1 lg:mt-6 lg:flex-row lg:justify-between lg:text-[11px] shrink-0 animate-slow-fade-in" style={{ animationDelay: '0.6s' }}>
+              <p className="font-medium lg:font-bold">attestation.mfa.gov.gh</p>
+              <p className="font-medium lg:font-bold uppercase tracking-wider">© 2026 Ministry of Foreign Affairs, Ghana</p>
             </div>
           </div>
         )}
 
         {view === 'signup' && (
-          <div className="flex-grow w-full flex flex-col p-6 lg:px-16 lg:py-8 overflow-y-auto animate-slide-in-right">
+          <div className="flex-grow w-full flex flex-col p-6 lg:px-20 lg:py-8 overflow-y-auto animate-slide-in-right">
             {/* Back Button for SignUp */}
             <div className="flex justify-start mb-4">
-              <button 
+              <button
                 onClick={goToWelcome}
                 className="flex items-center gap-2 text-neutral-400 hover:text-neutral-600 transition-colors group"
               >
@@ -120,10 +188,10 @@ const AuthSection = () => {
               </button>
             </div>
 
-            <div className="max-w-lg mx-auto w-full flex-grow flex flex-col">
-              <div className="mb-6">
-                <h1 className="text-neutral-800 text-[32px] font-bold mb-1 tracking-tight">Sign up for an account</h1>
-                <p className="text-neutral-500 text-sm font-medium">
+            <div className="max-w-lg mx-auto w-full flex-grow flex flex-col justify-center lg:justify-start lg:pt-8">
+              <div className="mb-8">
+                <h1 className="text-neutral-800 text-[28px] lg:text-[32px] font-bold mb-1 tracking-tight">Sign up for an account</h1>
+                <p className="text-neutral-500 text-[15px] lg:text-base font-medium">
                   Welcome back to the Attestation Portal.
                 </p>
               </div>
@@ -156,12 +224,12 @@ const AuthSection = () => {
                 <div className="space-y-1.5">
                   <label className="text-neutral-500 font-bold text-[9px] uppercase tracking-wider">Password</label>
                   <div className="relative">
-                    <input 
-                      type={showPassword ? "text" : "password"} 
-                      placeholder="••••••••" 
-                      className="w-full h-10 px-4 border border-neutral-200 rounded-lg focus:outline-none focus:border-brand-navy-700 transition-colors text-neutral-800 text-sm" 
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      className="w-full h-10 px-4 border border-neutral-200 rounded-lg focus:outline-none focus:border-brand-navy-700 transition-colors text-neutral-800 text-sm"
                     />
-                    <button 
+                    <button
                       type="button"
                       onClick={togglePassword}
                       className="absolute right-4 top-1/2 -translate-y-1/2 text-neutral-400 hover:text-neutral-600 transition-colors"
@@ -180,8 +248,8 @@ const AuthSection = () => {
                   </div>
                 </div>
 
-                <button 
-                  onClick={goToOtp}
+                <button
+                  onClick={goToDashboard}
                   className="w-full h-10 bg-brand-gold-500 hover:bg-brand-gold-700 text-brand-navy-700 font-bold text-sm rounded-lg transition-all shadow-sm mt-1"
                 >
                   Continue
@@ -207,26 +275,26 @@ const AuthSection = () => {
         )}
 
         {view === 'signin' && (
-          <LoginSection 
+          <LoginSection
             onBack={goToWelcome}
             onSignUp={goToSignUp}
             onForgotPassword={goToForgotPassword}
-            onLogin={() => console.log('User Logged In')}
+            onLogin={goToDashboard}
           />
         )}
 
         {view === 'otp' && (
-          <VerificationSection 
+          <VerificationSection
             onBack={goToSignUp}
             onVerify={() => {
               console.log('OTP Verified');
-              goToSetPassword();
+              goToDashboard();
             }}
           />
         )}
 
         {view === 'forgotpassword' && (
-          <ForgotPasswordSection 
+          <ForgotPasswordSection
             onBack={goToSignIn}
             onSendCode={(phone) => {
               console.log('Sending reset code to:', phone);
@@ -236,10 +304,10 @@ const AuthSection = () => {
         )}
 
         {view === 'setpassword' && (
-          <SetPasswordSection 
+          <SetPasswordSection
             onComplete={() => {
               console.log('Password set successfully');
-              goToSignIn();
+              goToDashboard();
             }}
           />
         )}

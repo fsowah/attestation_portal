@@ -35,30 +35,31 @@ const VerificationSection = ({ onBack, onVerify }) => {
         </button>
       </div>
 
-      <div className="max-w-lg mx-auto w-full flex-grow flex flex-col justify-center">
-        <div className="mb-6">
-          <h1 className="text-neutral-800 text-[32px] font-bold mb-1 tracking-tight">Enter verification code</h1>
-          <p className="text-neutral-500 text-sm font-normal leading-relaxed">
-            A 6-digit code was sent to your number ending with <span className="text-neutral-800 font-semibold">+233 xx xxx xx67</span>.
+      <div className="max-w-md mx-auto w-full flex-grow flex flex-col justify-center items-center text-center lg:justify-start lg:pt-12">
+        <div className="mb-8">
+          <h1 className="text-neutral-800 text-[28px] lg:text-[32px] font-bold mb-2 tracking-tight">Verify your number</h1>
+          <p className="text-neutral-500 text-[15px] lg:text-base font-medium leading-relaxed max-w-xs mx-auto">
+            Enter the 6-digit code we sent to your phone number.
           </p>
         </div>
 
-        <div className="flex gap-3 mb-6">
+        <div className="flex gap-2 lg:gap-3 mb-8 justify-center">
           {otp.map((digit, index) => (
             <input
               key={index}
               ref={(el) => (otpRefs.current[index] = el)}
               type="text"
+              inputMode="numeric"
               maxLength={1}
               value={digit}
               onChange={(e) => handleOtpChange(index, e.target.value)}
               onKeyDown={(e) => handleOtpKeyDown(index, e)}
-              className="w-[60px] h-[80px] text-center text-2xl font-bold bg-[#fffce5]/50 border border-brand-gold-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-gold-500 transition-all text-neutral-800"
+              className="w-11 h-16 lg:w-[60px] lg:h-[80px] text-center text-xl lg:text-2xl font-bold bg-[#fffce5]/50 border border-brand-gold-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-gold-500 transition-all text-neutral-800"
             />
           ))}
         </div>
 
-        <div className="flex justify-between items-center mb-6">
+        <div className="text-center space-y-2 mb-8">
           <p className="text-[13px] font-medium text-neutral-400">
             Didn't receive the code? <span className="text-brand-gold-700 font-bold cursor-pointer hover:underline">Resend it</span>
           </p>
