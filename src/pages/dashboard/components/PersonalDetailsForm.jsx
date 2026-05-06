@@ -1,23 +1,38 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Calendar, ChevronDown, Upload, FileText } from 'lucide-react';
 
-// Assets from Figma context
-const imgCalendarIcon = "http://localhost:3845/assets/d49c32f6d47e78fecd31bda3d5ddaa77116e3ea9.svg";
-const imgGhanaGh = "http://localhost:3845/assets/8d25541c19dab5dc3c40ed0d6d96c0c85a31d0eb.svg";
-const imgArrowDown = "http://localhost:3845/assets/4c04e9307657a673a7b8f66510075aa6b571cdf2.svg";
-const imgFileUploadIcon = "http://localhost:3845/assets/666b39efe1e7c9d3a2aaea96e632e6a683be0f19.svg";
-const imgFileIcon = "http://localhost:3845/assets/109d654bc063f8eb5868e1201e4b044e2bbc2e3e.svg";
-
-const PersonalDetailsForm = ({ onSave }) => {
+const PersonalDetailsForm = ({ onSave, onProgressUpdate, initialData }) => {
   const [formData, setFormData] = useState({
-    fullName: '',
-    phoneNumber: '',
-    dob: '',
-    ghanaCardNumber: '',
-    ghanaCardPhoto: null,
-    agreed: false
+    fullName: initialData?.fullName || '',
+    phoneNumber: initialData?.phoneNumber || '',
+    dob: initialData?.dob || '',
+    ghanaCardNumber: initialData?.ghanaCardNumber || '',
+    ghanaCardPhoto: initialData?.ghanaCardPhoto || null,
+    agreed: initialData?.agreed || false
   });
   const dateInputRef = useRef(null);
   const fileInputRef = useRef(null);
+
+  // Calculate progress based on filled fields
+  useEffect(() => {
+    const fields = [
+      formData.fullName,
+      formData.phoneNumber,
+      formData.dob,
+      formData.ghanaCardNumber,
+      formData.ghanaCardPhoto,
+      formData.agreed
+    ];
+    const filledFields = fields.filter(field => {
+      if (typeof field === 'boolean') return field === true;
+      return field !== null && field !== '';
+    }).length;
+    
+    const progress = Math.round((filledFields / fields.length) * 100);
+    if (onProgressUpdate) {
+      onProgressUpdate(progress);
+    }
+  }, [formData, onProgressUpdate]);
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -33,6 +48,7 @@ const PersonalDetailsForm = ({ onSave }) => {
       setFormData(prev => ({
         ...prev,
         ghanaCardPhoto: {
+          file: file,
           name: file.name,
           size: (file.size / (1024 * 1024)).toFixed(2) + ' MB'
         }
@@ -58,12 +74,21 @@ const PersonalDetailsForm = ({ onSave }) => {
     }
   };
 
+  // Helper to get current progress for UI
+  const calculateInternalProgress = () => {
+    const fields = [formData.fullName, formData.phoneNumber, formData.dob, formData.ghanaCardNumber, formData.ghanaCardPhoto, formData.agreed];
+    const filled = fields.filter(f => typeof f === 'boolean' ? f : (f !== null && f !== '')).length;
+    return Math.round((filled / fields.length) * 100);
+  };
+
+  const currentProgress = calculateInternalProgress();
+
   return (
     <div className="w-full bg-white animate-fade-in px-1">
       {/* Step Header */}
       <div className="flex items-start gap-4 mb-6">
         <div className="w-[52px] h-[52px] bg-brand-gold-50/50 border border-brand-gold-200 rounded-lg flex items-center justify-center shrink-0">
-          <img src={imgFileIcon} className="w-6 h-6" alt="" />
+          <FileText className="w-6 h-6 text-brand-gold-500" />
         </div>
         <div className="flex flex-col gap-1 pt-0.5">
           <div className="flex items-center gap-2">
@@ -72,15 +97,18 @@ const PersonalDetailsForm = ({ onSave }) => {
           </div>
           <div className="flex items-center gap-3">
             <div className="w-32 h-1.5 bg-neutral-100 rounded-full overflow-hidden">
-              <div className="h-full bg-emerald-800 w-[80%]" />
+              <div 
+                className="h-full bg-emerald-800 transition-all duration-500 ease-out" 
+                style={{ width: `${currentProgress}%` }}
+              />
             </div>
-            <span className="text-neutral-400 text-[12px] font-bold">80%</span>
+            <span className="text-neutral-400 text-[12px] font-bold">{currentProgress}%</span>
           </div>
         </div>
       </div>
 
       {/* Form Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 gap-y-5">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 xl:gap-x-20 2xl:gap-x-32 gap-y-5 xl:gap-y-8">
         {/* Left Column */}
         <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-1.5">
@@ -91,17 +119,17 @@ const PersonalDetailsForm = ({ onSave }) => {
               value={formData.fullName}
               onChange={handleInputChange}
               placeholder="Ama Dziedzom Barnor" 
-              className="w-full h-10 px-4 bg-neutral-50 rounded-lg border border-neutral-100 outline-none text-sm placeholder:text-neutral-300"
+              className="w-full h-10 px-4 bg-neutral-50 rounded-lg border border-neutral-100 outline-none text-sm placeholder:text-neutral-300 focus:border-brand-gold-300 transition-colors"
             />
           </div>
 
           <div className="flex gap-4">
             <div className="flex flex-col gap-1.5 flex-grow">
               <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Phone Number</label>
-              <div className="flex items-center gap-2 px-3 h-10 bg-neutral-50 rounded-lg border border-neutral-100">
-                <img src={imgGhanaGh} className="w-4 h-3 object-cover rounded-[1px]" alt="" />
+              <div className="flex items-center gap-2 px-3 h-10 bg-neutral-50 rounded-lg border border-neutral-100 focus-within:border-brand-gold-300 transition-colors">
+                <span className="text-base leading-none">🇬🇭</span>
                 <span className="text-[13px] text-neutral-500">+233</span>
-                <img src={imgArrowDown} className="w-2.5 h-2.5 opacity-30" alt="" />
+                <ChevronDown className="w-3 h-3 opacity-30" />
                 <div className="w-px h-4 bg-neutral-200 mx-0.5" />
                 <input 
                   type="text" 
@@ -129,7 +157,7 @@ const PersonalDetailsForm = ({ onSave }) => {
                   {formData.dob ? new Date(formData.dob).toLocaleDateString('en-GB') : <span className="text-neutral-300 tracking-wider">DD / MM / YYYY</span>}
                 </div>
                 <div className="absolute right-0 top-0 h-full w-10 flex items-center justify-center bg-neutral-50 border-l border-neutral-200 rounded-r-lg z-10">
-                  <img src={imgCalendarIcon} className="w-3.5 h-3.5 opacity-40" alt="" />
+                  <Calendar className="w-3.5 h-3.5 opacity-40" />
                 </div>
               </div>
             </div>
@@ -146,7 +174,7 @@ const PersonalDetailsForm = ({ onSave }) => {
               value={formData.ghanaCardNumber}
               onChange={handleInputChange}
               placeholder="GHA-XXXXXXXXXXXXX-X" 
-              className="w-full h-10 px-4 bg-white rounded-lg border border-neutral-200 outline-none text-sm placeholder:text-neutral-300"
+              className="w-full h-10 px-4 bg-white rounded-lg border border-neutral-200 outline-none text-sm placeholder:text-neutral-300 focus:border-brand-gold-300 transition-colors"
             />
           </div>
 
@@ -165,7 +193,7 @@ const PersonalDetailsForm = ({ onSave }) => {
                   <span className="text-sm font-bold text-neutral-700">{formData.ghanaCardPhoto.name}</span>
                   <div className="flex items-center gap-3">
                     <span className="text-[12px] text-neutral-400">{formData.ghanaCardPhoto.size}</span>
-                    <span className="text-[12px] text-neutral-400 font-medium">Completed</span>
+                    <span className="text-[12px] text-emerald-600 font-bold">Ready</span>
                   </div>
                 </div>
                 <button 
@@ -182,7 +210,7 @@ const PersonalDetailsForm = ({ onSave }) => {
                 onClick={triggerFileSelect}
                 className="w-full h-[90px] border-2 border-dashed border-brand-gold-500 rounded-lg flex flex-col items-center justify-center gap-1 bg-brand-gold-50/20 cursor-pointer hover:bg-brand-gold-50/40 transition-colors"
               >
-                <img src={imgFileUploadIcon} className="w-5 h-5 text-brand-gold-500" alt="" />
+                <Upload className="w-5 h-5 text-brand-gold-500" />
                 <span className="text-neutral-500 text-[12px] font-medium">Click to upload or drag & drop</span>
               </div>
             )}
@@ -191,8 +219,8 @@ const PersonalDetailsForm = ({ onSave }) => {
       </div>
 
       {/* Footer Section */}
-      <div className="flex flex-col gap-6 border-t border-neutral-50">
-        <div className="flex flex-col gap-2 max-w-xl">
+      <div className="flex flex-col gap-6 border-t border-neutral-50 mt-8">
+        <div className="flex flex-col gap-2 max-w-xl pt-6">
           <h4 className="text-[12px] font-bold text-neutral-600">Statutory declaration</h4>
           <p className="text-[11px] text-neutral-400 leading-relaxed">
             I confirm that all information and documents I submit are genuine and belong to me. I understand that submitting false documents is an offence under Ghanaian law and I accept full legal accountability for this submission.
@@ -216,12 +244,12 @@ const PersonalDetailsForm = ({ onSave }) => {
           </label>
         </div>
 
-        <div className="flex justify-end pt-2">
+        <div className="flex justify-end pt-2 mb-4">
           <button 
             onClick={() => onSave(formData)}
-            disabled={!formData.agreed}
+            disabled={!formData.agreed || currentProgress < 100}
             className={`px-8 py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm active:scale-95 ${
-              formData.agreed 
+              formData.agreed && currentProgress === 100
                 ? 'bg-brand-gold-500 hover:bg-brand-gold-600 text-brand-navy-800' 
                 : 'bg-neutral-100 text-neutral-400 cursor-not-allowed shadow-none'
             }`}

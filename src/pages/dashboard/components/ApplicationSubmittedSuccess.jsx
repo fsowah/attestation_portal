@@ -1,8 +1,6 @@
 import React from 'react';
-
-// Assets from Figma context
-const imgGreenTick = "http://localhost:3845/assets/7e6c7f33b5cbe6c387a50fcc6f255e8b6146592b.svg";
-const imgMoFACrest = "http://localhost:3845/assets/f2061c498da3143761f19b9e370d1c33b8a29e86.svg";
+import { CheckCircle } from 'lucide-react';
+import MoFACrest from '../../../assets/images/Logo_crest.png';
 
 const ApplicationSubmittedSuccess = ({ onGoHome }) => {
   return (
@@ -11,7 +9,7 @@ const ApplicationSubmittedSuccess = ({ onGoHome }) => {
       <div className="absolute inset-0 opacity-[0.02] pointer-events-none flex items-center justify-center overflow-hidden">
         <div className="grid grid-cols-4 gap-40 rotate-[15deg] scale-150">
           {[...Array(12)].map((_, i) => (
-            <img key={i} src={imgMoFACrest} className="w-32 h-32" alt="" />
+            <img key={i} src={MoFACrest} className="w-32 h-32" alt="" />
           ))}
         </div>
       </div>
@@ -19,7 +17,7 @@ const ApplicationSubmittedSuccess = ({ onGoHome }) => {
       {/* 1. Success Icon with Rings (Reduced size) */}
       <div className="relative mb-6">
         <div className="size-[64px] bg-[#00875A] rounded-full flex items-center justify-center relative z-10">
-          <img src={imgGreenTick} className="w-6 h-6 invert brightness-0" alt="Success" />
+          <CheckCircle className="w-6 h-6 text-white" />
         </div>
         {/* Soft mint outer rings */}
         <div className="absolute inset-0 size-[84px] -left-[10px] -top-[10px] bg-[#00875A]/10 rounded-full" />

@@ -6,7 +6,7 @@ const Login = () => {
   return (
     <div className="flex flex-col lg:flex-row h-screen w-full bg-white font-inter overflow-hidden">
       {/* Left Side: Info Section (Floating Card) - Hidden on Mobile */}
-      <div className="hidden lg:block w-full lg:w-[45%] xl:w-[42%] h-full p-4 lg:p-5 shrink-0">
+      <div className="hidden lg:block w-full lg:w-[45%] xl:w-[42%] 2xl:w-[40%] h-full p-4 lg:p-5 xl:p-8 shrink-0">
         <InfoSection />
       </div>
 

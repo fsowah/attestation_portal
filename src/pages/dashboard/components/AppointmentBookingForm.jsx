@@ -1,207 +1,290 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { Calendar as CalendarIcon, Clock, ChevronLeft, ChevronRight, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
+import { supabase } from '../../../supabaseClient';
 
-// Assets from Figma context
-const imgArrowLeft = "http://localhost:3845/assets/arrow-left-01.svg"; // Placeholder for icon mapping
-const imgArrowRight = "http://localhost:3845/assets/arrow-right-01.svg";
-const imgCheckmarkSquare = "http://localhost:3845/assets/checkmark-square-02.svg";
+const AppointmentBookingForm = ({ onSave, onProgressUpdate, initialData }) => {
+  const [selectedDate, setSelectedDate] = useState(initialData?.date || '');
+  const [selectedSlot, setSelectedSlot] = useState(initialData ? { time: initialData.time, id: initialData.id } : null);
+  const [availableSlots, setAvailableSlots] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+  
+  const [availableDates, setAvailableDates] = useState(new Set());
+  const [currentMonth, setCurrentMonth] = useState(initialData?.date ? new Date(initialData.date) : new Date());
 
-const AppointmentBookingForm = ({ onSave }) => {
-  const [selectedDate, setSelectedDate] = useState(9); // Default to 9 as in design
-  const [selectedTime, setSelectedTime] = useState('9:00 am');
-  const [currentMonth, setCurrentMonth] = useState('April 2026');
-  const [showSummary, setShowSummary] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
+  useEffect(() => {
+    const fetchAllAvailableDates = async () => {
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        const { data, error } = await supabase
+          .from('appointment_slots')
+          .select('date')
+          .gte('date', today)
+          .eq('is_available', true);
+          
+        if (!error && data) {
+           setAvailableDates(new Set(data.map(d => d.date)));
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    fetchAllAvailableDates();
+  }, []);
 
-  const calendarDays = [
-    { day: 30, isMuted: true, isPast: true }, { day: 31, isMuted: true, isPast: true },
-    { day: 1, isUpcoming: true }, { day: 2, isUpcoming: true }, { day: 3, isUpcoming: true }, { day: 4, isWeekend: true }, { day: 5, isWeekend: true },
-    { day: 6, isUpcoming: true }, { day: 7, isUpcoming: true }, { day: 8, isUpcoming: true }, { day: 9, isSelected: true }, { day: 10, isUpcoming: true }, { day: 11, isWeekend: true }, { day: 12, isWeekend: true },
-    { day: 13, isUpcoming: true }, { day: 14, isUpcoming: true }, { day: 15, isUpcoming: true }, { day: 16, isUpcoming: true }, { day: 17, isUpcoming: true }, { day: 18, isWeekend: true }, { day: 19, isWeekend: true },
-    { day: 20, isUpcoming: true }, { day: 21, isUpcoming: true }, { day: 22, isBooked: true },
-    { day: 23, isBooked: true }, { day: 24, isBooked: true }, { day: 25, isWeekend: true }, { day: 26, isWeekend: true },
-    { day: 27, isBooked: true }, { day: 28, isBooked: true }, { day: 29, isBooked: true }, { day: 30, isBooked: true },
-    { day: 1, isWeekend: true, isMuted: true }, { day: 2, isWeekend: true, isMuted: true }, { day: 3, isWeekend: true, isMuted: true },
-  ];
+  // Calculate progress
+  useEffect(() => {
+    let progress = 0;
+    if (selectedDate) progress = 50;
+    if (selectedSlot) progress = 100;
+    
+    if (onProgressUpdate) {
+      onProgressUpdate(progress);
+    }
+  }, [selectedDate, selectedSlot, onProgressUpdate]);
 
-  const timeSlots = [
-    { time: '8:00 am', slots: 3 },
-    { time: '9:00 am', slots: 1, isLow: true, isSelected: true },
-    { time: '10:00 am', slots: 5 },
-    { time: '10:30 am', slots: 2 },
-    { time: '11:00 am', slots: 5 },
-    { time: '12:00 pm', slots: 3 },
-  ];
+  useEffect(() => {
+    if (selectedDate) {
+      fetchAvailableSlots();
+    }
+  }, [selectedDate]);
 
-  if (isSuccess) {
-    return (
-      <div className="flex flex-col items-center justify-center py-12 animate-fade-in text-center max-w-[600px] mx-auto">
-        <div className="size-[88px] bg-[#E5F4ED] rounded-full flex items-center justify-center mb-8">
-          <img src="http://localhost:3845/assets/7e6c7f33b5cbe6c387a50fcc6f255e8b6146592b.svg" alt="Success" className="size-10" />
-        </div>
-        
-        <h2 className="text-[28px] font-bold text-[#0A1628] mb-3">Appointment Booked!</h2>
-        <p className="text-[15px] text-neutral-500 leading-relaxed max-w-[420px] mb-12">
-          Your appointment has been successfully scheduled. We've sent a confirmation email with all the details.
-        </p>
+  const fetchAvailableSlots = async () => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      // 1. Fetch available slots for the date
+      const { data: slots, error: slotError } = await supabase
+        .from('appointment_slots')
+        .select('*')
+        .eq('date', selectedDate)
+        .eq('is_available', true);
 
-        <div className="flex flex-col gap-4 w-full max-w-[364px]">
-          <button 
-            className="h-[54px] bg-[#FCD116] text-[#0A1628] rounded-lg font-bold text-[15px] flex items-center justify-center gap-2 shadow-sm active:scale-[0.98] transition-all"
-          >
-            <img src="http://localhost:3845/assets/3590c99d779b02ba576a59243a9fa3ad48dbfc3e.svg" alt="Receipt" className="size-5" />
-            Download receipt
-          </button>
-          <button 
-            onClick={() => onSave({ date: selectedDate, time: selectedTime })}
-            className="h-[54px] border border-neutral-200 text-[#0A1628] rounded-lg font-bold text-[15px] active:scale-[0.98] transition-all"
-          >
-            Go to Home
-          </button>
-        </div>
-      </div>
-    );
-  }
+      if (slotError) {
+        console.error('Slot fetch error:', slotError);
+        throw slotError;
+      }
+
+      if (!slots || slots.length === 0) {
+        setAvailableSlots([]);
+        setIsLoading(false);
+        return;
+      }
+
+      // 2. Fetch booking counts (resiliently)
+      const bookingCounts = {};
+      try {
+        const { data: bookings, error: bookError } = await supabase
+          .from('applications')
+          .select('appointment_details')
+          .eq('appointment_details->>date', selectedDate)
+          .not('status', 'eq', 'Rejected');
+
+        if (bookError) {
+          // If this fails (e.g. RLS), we'll just proceed with 0 counts for other users
+          console.warn('Could not fetch booking counts due to permissions:', bookError);
+        } else {
+          bookings?.forEach(app => {
+            const appTime = app.appointment_details?.time;
+            if (appTime) {
+              bookingCounts[appTime] = (bookingCounts[appTime] || 0) + 1;
+            }
+          });
+        }
+      } catch (bookErr) {
+        console.warn('Booking count fetch failed:', bookErr);
+      }
+
+      // 3. Process and filter slots
+      const processedSlots = slots.map(slot => ({
+        ...slot,
+        remaining: slot.capacity - (bookingCounts[slot.time] || 0)
+      })).filter(slot => slot.remaining > 0);
+
+      setAvailableSlots(processedSlots);
+    } catch (err) {
+      console.error('Error in fetchAvailableSlots:', err);
+      setError('Could not fetch available slots. Please ensure the admin has configured slots for this date.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSlotSelect = (slot) => {
+    setSelectedSlot(slot);
+  };
+
+  const handleConfirm = () => {
+    if (selectedDate && selectedSlot) {
+      onSave({
+        date: selectedDate,
+        time: selectedSlot.time,
+        id: selectedSlot.id
+      });
+    }
+  };
+
+  const daysInMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 0).getDate();
+  const firstDayOfMonth = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1).getDay();
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  const handlePrevMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1, 1));
+  };
+
+  const handleNextMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1));
+  };
+
+  const generateCalendarDays = () => {
+    const days = [];
+    for (let i = 0; i < firstDayOfMonth; i++) {
+      days.push(null);
+    }
+    for (let i = 1; i <= daysInMonth; i++) {
+      const date = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), i);
+      // Adjust timezone offset locally
+      const localDateStr = new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+      days.push({
+        date: date,
+        dateStr: localDateStr,
+        dayNumber: i,
+        isWeekend: date.getDay() === 0 || date.getDay() === 6,
+        isPast: localDateStr < todayStr
+      });
+    }
+    return days;
+  };
 
   return (
-    <div className="flex flex-col animate-fade-in">
-      {!showSummary ? (
-        <>
-          <div className="flex flex-col lg:flex-row gap-12 p-2">
-
-            {/* Left Column: Calendar */}
-            <div className="flex-1 min-w-[340px]">
-              <div className="flex items-center justify-between mb-8">
-                <h3 className="text-[17px] font-bold text-[#0A1628]">Choose day</h3>
-                <div className="flex items-center gap-6">
-                  <button className="p-1 opacity-40 hover:opacity-100 transition-opacity">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6" /></svg>
-                  </button>
-                  <span className="text-[15px] font-bold text-[#0A1628] min-w-[100px] text-center">{currentMonth}</span>
-                  <button className="p-1 opacity-40 hover:opacity-100 transition-opacity">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="m9 18 6-6-6-6" /></svg>
-                  </button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-7 gap-4.5 mb-4 text-center max-w-[640px]">
-                {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((day, i) => (
-                  <div key={i} className="text-[14px] font-bold text-[#0A1628] h-10 flex items-center justify-center">
-                    {day}
-                  </div>
-                ))}
-                {calendarDays.map((item, i) => (
-                  <div
-                    key={i}
-                    onClick={() => !item.isBooked && !item.isPast && !item.isWeekend && setSelectedDate(item.day)}
-                    className={`relative w-[44px] h-[44px] flex items-center justify-center text-[15px] font-medium rounded-xl cursor-pointer transition-all
-                      ${item.isPast ? 'text-neutral-300 bg-white' : ''}
-                      ${item.isUpcoming ? 'text-[#0A1628] bg-white border border-neutral-100 shadow-sm' : ''}
-                      ${item.isWeekend ? 'text-neutral-300 bg-[#F0F0F0]' : ''}
-                      ${item.isBooked ? '!bg-[#E56E75] !text-white border-none cursor-not-allowed shadow-none' : ''}
-                      ${selectedDate === item.day && !item.isBooked && !item.isPast && !item.isWeekend ? '!bg-[#FCD116] !text-[#0A1628] !font-bold border-none shadow-md' : ''}
-                    `}
-                  >
-                    {item.day}
-                  </div>
-                ))}
-              </div>
-
-              {/* Legend */}
-              <div className="flex items-center gap-6 mt-8">
-                <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 rounded-lg border border-neutral-200 bg-white" />
-                  <span className="text-[12px] font-medium text-neutral-400">Available</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 rounded-lg bg-[#E56E75]" />
-                  <span className="text-[12px] font-medium text-neutral-400">Fully booked</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-5 h-5 rounded-lg bg-[#FCD116]" />
-                  <span className="text-[12px] font-medium text-neutral-400">Selected</span>
-                </div>
+    <div className="w-full bg-white animate-fade-in">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 xl:gap-20">
+        <div className="flex flex-col gap-6">
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between mb-2">
+              <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Select Date</label>
+              <div className="flex items-center gap-2">
+                <button onClick={handlePrevMonth} className="p-1 rounded bg-neutral-100 hover:bg-neutral-200 transition-all"><ChevronLeft className="w-4 h-4" /></button>
+                <span className="text-sm font-black text-brand-navy-800 min-w-[120px] text-center">
+                  {currentMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}
+                </span>
+                <button onClick={handleNextMonth} className="p-1 rounded bg-neutral-100 hover:bg-neutral-200 transition-all"><ChevronRight className="w-4 h-4" /></button>
               </div>
             </div>
-
-            {/* Right Column: Time Slots */}
-            <div className="w-full lg:w-[420px]">
-              <div className="flex items-center justify-between mb-8">
-                <h3 className="text-[17px] font-bold text-[#0A1628]">Choose hour</h3>
-                <span className="text-[14px] font-medium text-neutral-400">Ghana(UTC+00:00)</span>
-              </div>
-
-              <div className="flex flex-col gap-3">
-                {timeSlots.map((slot, i) => (
-                  <div
-                    key={i}
-                    onClick={() => setSelectedTime(slot.time)}
-                    className={`h-[58px] px-6 rounded-xl border flex items-center justify-between cursor-pointer transition-all group
-                      ${selectedTime === slot.time
-                        ? 'bg-[#FCD116] border-none'
-                        : 'border-neutral-100 bg-[#F9F8F7] hover:border-neutral-200'
-                      }`}
-                  >
-                    <div className="flex items-center gap-1">
-                      <span className={`text-[16px] font-bold ${selectedTime === slot.time ? 'text-[#0A1628]' : 'text-neutral-700'}`}>
-                        {slot.time.split(' ')[0]}
-                      </span>
-                      <span className="text-[13px] font-medium text-neutral-400 mt-0.5">
-                        {slot.time.split(' ')[1]}
-                      </span>
-                    </div>
-                    <span className={`text-[12px] font-medium ${slot.isLow ? (selectedTime === slot.time ? 'text-white/80' : 'text-[#E56E75]') : 'text-neutral-300'}`}>
-                      {slot.slots} {slot.slots === 1 ? 'slot' : 'slots'} left
-                    </span>
-                  </div>
+            
+            <div className="bg-white border border-neutral-100 rounded-2xl p-4 shadow-sm">
+              <div className="grid grid-cols-7 gap-1 mb-2">
+                {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map(day => (
+                  <div key={day} className="text-center text-[10px] font-bold text-neutral-400 uppercase">{day}</div>
                 ))}
+              </div>
+              <div className="grid grid-cols-7 gap-1">
+                {generateCalendarDays().map((day, index) => {
+                  if (!day) return <div key={`empty-${index}`} className="p-2" />;
+                  
+                  const isAvailable = availableDates.has(day.dateStr);
+                  const isSelected = selectedDate === day.dateStr;
+                  const isDisabled = day.isPast || day.isWeekend || (!isAvailable && !isSelected);
+
+                  return (
+                    <button
+                      key={day.dateStr}
+                      disabled={isDisabled}
+                      onClick={() => {
+                        setSelectedDate(day.dateStr);
+                        setSelectedSlot(null);
+                      }}
+                      className={`
+                        aspect-square flex items-center justify-center rounded-xl text-sm font-bold transition-all relative
+                        ${isSelected ? 'bg-brand-gold-500 text-brand-navy-900 shadow-md transform scale-105 z-10' : ''}
+                        ${!isSelected && !isDisabled && isAvailable ? 'bg-emerald-50 text-emerald-700 hover:bg-emerald-100' : ''}
+                        ${!isSelected && isDisabled ? 'text-neutral-300 cursor-not-allowed' : ''}
+                        ${!isSelected && !isDisabled && !isAvailable ? 'bg-neutral-50 text-neutral-600 hover:bg-neutral-100' : ''}
+                      `}
+                    >
+                      {day.dayNumber}
+                      {isAvailable && !isSelected && (
+                        <div className="absolute bottom-1 w-1 h-1 bg-emerald-400 rounded-full"></div>
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           </div>
 
-          <button
-            onClick={() => setShowSummary(true)}
-            className="w-[364px] h-[54px] rounded-lg bg-[#FCD116] text-[#0A1628] text-[15px] font-bold mt-12 transition-all flex items-center justify-center shadow-sm active:scale-[0.98]"
-          >
-            Go to summary
-          </button>
-        </>
-      ) : (
-        <div className="flex flex-col animate-fade-in max-w-[600px] w-full">
-          <div className="bg-[#F9F8F7]/50 rounded-2xl p-6 border border-neutral-100 mb-6">
-            <div className="mb-6">
-              <h3 className="text-[16px] font-bold text-[#0A1628] mb-1">Summary of the booking</h3>
-              <p className="text-[13px] text-neutral-400">Check if all information are correct</p>
-            </div>
-
-            <div className="flex flex-col gap-3">
-              {/* Date Card */}
-              <div className="h-[80px] bg-white rounded-xl border border-neutral-100 shadow-sm flex items-center justify-center gap-2">
-                <span className="text-[28px] font-bold text-[#0A1628]">{selectedDate}</span>
-                <span className="text-[16px] font-bold text-[#0A1628] mt-1">April</span>
-              </div>
-
-              {/* Time Card */}
-              <div className="h-[80px] bg-white rounded-xl border border-neutral-100 shadow-sm flex items-center justify-center gap-2">
-                <span className="text-[28px] font-bold text-[#0A1628]">{selectedTime.split(' ')[0]}</span>
-                <span className="text-[16px] font-bold text-[#0A1628] mt-1">{selectedTime.split(' ')[1]}</span>
-              </div>
-
-              {/* Location Card */}
-              <div className="h-[70px] bg-white rounded-xl border border-neutral-100 shadow-sm flex flex-col items-center justify-center">
-                <span className="text-[14px] font-bold text-[#0A1628]">MOFA Office, Accra</span>
-                <span className="text-[12px] text-neutral-400">Gamel Abdul Nasser Ave</span>
-              </div>
-            </div>
+          <div className="p-6 bg-brand-navy-800 rounded-2xl text-white relative overflow-hidden">
+             <div className="absolute top-0 right-0 p-6 opacity-10">
+                <CalendarIcon className="w-20 h-20" />
+             </div>
+             <h4 className="text-[10px] font-bold text-brand-gold-500 uppercase tracking-widest mb-4">Selection Summary</h4>
+             <div className="flex flex-col gap-3 relative z-10">
+                <div className="flex items-center justify-between border-b border-white/5 pb-2">
+                   <span className="text-xs text-white/40">Date</span>
+                   <span className="text-sm font-bold">{selectedDate ? new Date(selectedDate).toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Not selected'}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                   <span className="text-xs text-white/40">Time</span>
+                   <span className="text-sm font-bold">{selectedSlot ? selectedSlot.time : 'Select a slot'}</span>
+                </div>
+             </div>
           </div>
-
-          <button
-            onClick={() => onSave({ date: selectedDate, time: selectedTime })}
-            className="w-[364px] h-[54px] rounded-lg bg-[#FCD116] text-[#0A1628] text-[15px] font-bold transition-all flex items-center justify-center shadow-sm active:scale-[0.98]"
-          >
-            Confirm
-          </button>
         </div>
-      )}
+
+        <div className="flex flex-col gap-4">
+          <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Available Time Slots</label>
+          
+          {isLoading ? (
+            <div className="flex flex-col items-center justify-center py-20 bg-neutral-50/50 rounded-2xl border border-dashed border-neutral-100">
+              <Loader2 className="w-8 h-8 text-brand-gold-500 animate-spin" />
+              <p className="mt-4 text-xs font-bold text-neutral-400 uppercase tracking-widest">Checking capacity...</p>
+            </div>
+          ) : error ? (
+            <div className="p-6 bg-amber-50 border border-amber-100 rounded-2xl flex items-start gap-3">
+              <AlertCircle className="w-5 h-5 text-amber-500 shrink-0" />
+              <p className="text-xs text-amber-800 font-medium leading-relaxed">{error}</p>
+            </div>
+          ) : availableSlots.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 bg-neutral-50/50 rounded-2xl border border-dashed border-neutral-100">
+               <Clock className="w-10 h-10 text-neutral-200 mb-2" />
+               <p className="text-neutral-400 text-xs font-medium">{selectedDate ? 'No available slots for this date' : 'Please select a date first'}</p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+              {availableSlots.map((slot) => (
+                <button
+                  key={slot.id}
+                  onClick={() => handleSlotSelect(slot)}
+                  className={`p-4 rounded-xl border-2 transition-all flex flex-col gap-1 items-start group ${
+                    selectedSlot?.id === slot.id 
+                      ? 'border-brand-gold-500 bg-white ring-2 ring-brand-gold-500/10' 
+                      : 'border-neutral-50 bg-[#F9F8F7] hover:border-brand-gold-200'
+                  }`}
+                >
+                  <span className={`text-[15px] font-black ${selectedSlot?.id === slot.id ? 'text-brand-navy-800' : 'text-neutral-500 group-hover:text-brand-navy-800'}`}>
+                    {slot.time}
+                  </span>
+                  <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-tighter">{slot.remaining} slots left</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          <div className="mt-auto pt-6 border-t border-neutral-50">
+            <button
+              onClick={handleConfirm}
+              disabled={!selectedSlot}
+              className={`w-full h-12 rounded-xl text-sm font-black transition-all flex items-center justify-center gap-2 shadow-md active:scale-95 ${
+                selectedSlot 
+                  ? 'bg-brand-gold-500 text-brand-navy-800 hover:bg-brand-gold-600' 
+                  : 'bg-neutral-100 text-neutral-400 cursor-not-allowed'
+              }`}
+            >
+              {selectedSlot ? <><CheckCircle className="w-4 h-4" /><span>Confirm Appointment Slot</span></> : 'Confirm Selection'}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

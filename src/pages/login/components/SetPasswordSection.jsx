@@ -1,8 +1,5 @@
 import React, { useState } from 'react';
-
-const imgAlertCircle = "http://localhost:3845/assets/c46b324b6a0955363ecb396e7ab05b213c09826d.svg";
-const imgCheckmarkSquareChecked = "http://localhost:3845/assets/71460a552443d17c49a1f980adbd24c2c629a24d.svg";
-const imgCheckmarkSquareUnchecked = "http://localhost:3845/assets/3495c72c6679e296fb6c3aa96a260c8d9c885300.svg";
+import { AlertCircle, CheckSquare, Square } from 'lucide-react';
 
 const SetPasswordSection = ({ onComplete }) => {
   const [password, setPassword] = useState('');
@@ -78,7 +75,7 @@ const SetPasswordSection = ({ onComplete }) => {
           {password.length > 0 && (
             <div className="bg-[#f9f8f7] rounded-lg p-4 space-y-4 animate-fade-in">
               <div className="flex items-center gap-2">
-                <img src={imgAlertCircle} alt="" className="w-4 h-4" />
+                <AlertCircle className={`w-4 h-4 ${strengthTextColor}`} />
                 <span className={`text-sm font-medium ${strengthTextColor}`}>{strength}</span>
               </div>
               
@@ -91,11 +88,7 @@ const SetPasswordSection = ({ onComplete }) => {
               <div className="space-y-2">
                 {requirements.map((req, i) => (
                   <div key={i} className="flex items-center gap-2">
-                    <img 
-                      src={req.met ? imgCheckmarkSquareChecked : imgCheckmarkSquareUnchecked} 
-                      alt="" 
-                      className="w-4 h-4 transition-all"
-                    />
+                    {req.met ? <CheckSquare className="w-4 h-4 transition-all text-neutral-800" /> : <Square className="w-4 h-4 transition-all text-neutral-400" />}
                     <span className={`text-[13px] transition-colors ${req.met ? 'text-neutral-800' : 'text-neutral-400'}`}>
                       {req.label}
                     </span>
@@ -133,7 +126,7 @@ const SetPasswordSection = ({ onComplete }) => {
             </div>
             {showMismatchError && (
               <div className="flex items-center gap-2 mt-2 animate-fade-in">
-                <img src={imgAlertCircle} alt="" className="w-4 h-4" />
+                <AlertCircle className="w-4 h-4 text-red-500" />
                 <p className="text-red-500 text-[13px] font-medium">Passwords do not match. Please check and try again.</p>
               </div>
             )}

@@ -6,35 +6,78 @@ import VerificationSection from './VerificationSection';
 import LoginSection from './LoginSection';
 import ForgotPasswordSection from './ForgotPasswordSection';
 import SetPasswordSection from './SetPasswordSection';
-
-const imgHelpCircle = "http://localhost:3845/assets/8bff9de17499bf9f8b76cd0629aa6c554ff7d243.svg";
+import { HelpCircle, AlertCircle, Loader2 } from 'lucide-react';
+import LogoCrest from '../../../assets/images/Logo_crest.png';
+import vector0 from '../../../assets/images/Vector.svg';
+import vector1 from '../../../assets/images/vector1.svg';
+import { supabase } from '../../../supabaseClient';
 
 const AuthSection = () => {
   const navigate = useNavigate();
   const [view, setView] = useState('welcome'); // 'welcome', 'signup', 'signin', 'otp', 'forgotpassword', 'setpassword'
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Form State
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
 
-  const goToSignUp = () => { setView('signup'); setIsMenuOpen(false); };
-  const goToWelcome = () => { setView('welcome'); setIsMenuOpen(false); };
-  const goToSignIn = () => { setView('signin'); setIsMenuOpen(false); };
-  const goToOtp = () => { setView('otp'); setIsMenuOpen(false); };
-  const goToForgotPassword = () => { setView('forgotpassword'); setIsMenuOpen(false); };
-  const goToSetPassword = () => { setView('setpassword'); setIsMenuOpen(false); };
-  const goToDashboard = () => { navigate('/dashboard'); };
+  const goToSignUp = () => { setView('signup'); setIsMenuOpen(false); setError(null); };
+  const goToWelcome = () => { setView('welcome'); setIsMenuOpen(false); setError(null); };
+  const goToSignIn = () => { setView('signin'); setIsMenuOpen(false); setError(null); };
+  const goToOtp = () => { setView('otp'); setIsMenuOpen(false); setError(null); };
+  const goToForgotPassword = () => { setView('forgotpassword'); setIsMenuOpen(false); setError(null); };
+  const goToSetPassword = () => { setView('setpassword'); setIsMenuOpen(false); setError(null); };
+  
   const togglePassword = () => setShowPassword(!showPassword);
   const toggleMenu = () => setIsMenuOpen(!isMenuOpen);
+
+  const handleSignUp = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            full_name: fullName,
+            phone: phoneNumber,
+          }
+        }
+      });
+
+      if (signUpError) throw signUpError;
+
+      if (data.user) {
+        navigate('/dashboard');
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLoginSuccess = () => {
+    navigate('/dashboard');
+  };
 
   return (
     <div className="relative h-full w-full bg-white overflow-hidden">
       {/* Decorative Background Elements (persistent) */}
-      <div className="absolute inset-0 opacity-[0.3] pointer-events-none select-none overflow-hidden z-0">
+      <div className="absolute inset-0 opacity-[0.4] pointer-events-none select-none overflow-hidden z-0">
         <div className="absolute top-[-10%] right-[-10%] w-[120%] h-[120%] flex flex-wrap gap-32 rotate-[10deg]">
           {[...Array(15)].map((_, i) => (
             <div key={i} className="flex gap-32">
-              <img src="http://localhost:3845/assets/1f48a3207868058edf3b90fe1d2997082b5ba5b4.svg" className="w-24 h-24 rotate-45" alt="" />
-              <img src="http://localhost:3845/assets/bf0300fcd0ddb2e16da711386589650749306798.svg" className="w-20 h-20 -rotate-12 mt-16" alt="" />
+              <img src={vector0} className="w-24 h-24 rotate-45 opacity-50" alt="" />
+              <img src={vector1} className="w-20 h-20 -rotate-12 mt-16 opacity-50" alt="" />
             </div>
           ))}
         </div>
@@ -54,7 +97,7 @@ const AuthSection = () => {
             <div className="px-6 pt-10 flex justify-between items-center mb-6">
               <div className="flex items-center gap-3">
                 <img
-                  src="http://localhost:3845/assets/b2bdf8f7c8828484728deaa27435bbdd1780dafc.png"
+                  src={LogoCrest}
                   alt="Logo"
                   className="h-8 w-auto object-contain"
                 />
@@ -86,7 +129,7 @@ const AuthSection = () => {
                 className="flex items-center gap-4 text-white/90 cursor-pointer"
               >
                 <div className="w-9 h-9 rounded-full bg-white/10 border border-white/20 flex items-center justify-center">
-                  <img src={imgHelpCircle} alt="Help" className="w-3.5 h-3.5 invert" />
+                  <HelpCircle className="w-3.5 h-3.5 text-white" />
                 </div>
                 <span className="font-bold text-base">Help Center</span>
               </div>
@@ -111,7 +154,7 @@ const AuthSection = () => {
         <div className="hidden lg:flex px-12 lg:px-20 pt-12 lg:pt-16 justify-end items-center gap-10 shrink-0">
           <div className="flex items-center gap-2 cursor-pointer group">
             <div className="w-6 h-6 rounded-full border border-neutral-300 flex items-center justify-center">
-              <img src={imgHelpCircle} alt="Help" className="w-3 h-3 opacity-60" />
+              <HelpCircle className="w-3 h-3 text-neutral-800 opacity-60" />
             </div>
             <span className="text-neutral-800 font-semibold text-sm">Help</span>
           </div>
@@ -123,23 +166,23 @@ const AuthSection = () => {
           <div className="flex-grow w-full flex flex-col p-6 lg:px-20 overflow-y-auto">
             {/* Main Content */}
             <div className="max-w-lg mx-auto w-full flex-grow flex flex-col justify-center lg:justify-start lg:pt-12">
-              <div className="mb-10 lg:mb-12 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-                <h1 className="flex text-neutral-800 text-[36px] font-black mb-2 tracking-tight">Welcome</h1>
-                <p className="text-neutral-500 text-[15px] lg:text-base font-normal leading-relaxed max-w-sm">
+              <div className="mb-10 lg:mb-12 xl:mb-16 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+                <h1 className="flex text-neutral-800 text-[36px] xl:text-[48px] 2xl:text-[56px] font-black mb-2 tracking-tight">Welcome</h1>
+                <p className="text-neutral-500 text-[15px] lg:text-base xl:text-lg font-normal leading-relaxed max-w-sm xl:max-w-md">
                   Sign in or create an account to begin your attestation request.
                 </p>
               </div>
 
-              <div className="flex flex-col gap-4 mb-10 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+              <div className="flex flex-col gap-4 mb-10 xl:mb-14 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
                 <button
                   onClick={goToSignUp}
-                  className="w-full h-11 lg:h-12 bg-brand-gold-500 hover:bg-brand-gold-700 text-brand-navy-700 font-bold text-sm lg:text-base rounded-lg transition-all shadow-sm hover:scale-[1.01] active:scale-[0.99]"
+                  className="w-full h-11 lg:h-12 xl:h-14 bg-brand-gold-500 hover:bg-brand-gold-700 text-brand-navy-700 font-bold text-sm lg:text-base xl:text-lg rounded-lg transition-all shadow-sm hover:scale-[1.01] active:scale-[0.99]"
                 >
                   Create an account
                 </button>
                 <button
                   onClick={goToSignIn}
-                  className="w-full h-11 lg:h-12 bg-white  border border-brand-navy-800 hover:bg-neutral-50 text-brand-navy-800 font-bold text-sm lg:text-base rounded-lg transition-all hover:scale-[1.01] active:scale-[0.99]"
+                  className="w-full h-11 lg:h-12 xl:h-14 bg-white  border border-brand-navy-800 hover:bg-neutral-50 text-brand-navy-800 font-bold text-sm lg:text-base xl:text-lg rounded-lg transition-all hover:scale-[1.01] active:scale-[0.99]"
                 >
                   Sign in to existing account
                 </button>
@@ -188,18 +231,32 @@ const AuthSection = () => {
               </button>
             </div>
 
-            <div className="max-w-lg mx-auto w-full flex-grow flex flex-col justify-center lg:justify-start lg:pt-8">
+            <form onSubmit={handleSignUp} className="max-w-lg mx-auto w-full flex-grow flex flex-col justify-center lg:justify-start lg:pt-8">
               <div className="mb-8">
                 <h1 className="text-neutral-800 text-[28px] lg:text-[32px] font-bold mb-1 tracking-tight">Sign up for an account</h1>
                 <p className="text-neutral-500 text-[15px] lg:text-base font-medium">
-                  Welcome back to the Attestation Portal.
+                  Join the Ministry of Foreign Affairs Attestation Portal.
                 </p>
               </div>
+
+              {error && (
+                <div className="mb-6 p-4 bg-red-50 border border-red-100 rounded-xl flex items-center gap-3 text-red-600 animate-shake">
+                  <AlertCircle className="w-5 h-5 shrink-0" />
+                  <p className="text-xs font-bold leading-tight">{error}</p>
+                </div>
+              )}
 
               <div className="space-y-5">
                 <div className="space-y-1.5">
                   <label className="text-neutral-500 font-bold text-[9px] uppercase tracking-wider">Full Name</label>
-                  <input type="text" placeholder="Your name" className="w-full h-10 px-4 border border-neutral-200 rounded-lg focus:outline-none focus:border-brand-navy-700 transition-colors placeholder:text-neutral-300 text-neutral-800 text-sm" />
+                  <input 
+                    type="text" 
+                    required
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Ama Dziedzom Barnor" 
+                    className="w-full h-10 px-4 border border-neutral-200 rounded-lg focus:outline-none focus:border-brand-navy-700 transition-colors placeholder:text-neutral-300 text-neutral-800 text-sm" 
+                  />
                 </div>
 
                 <div className="flex flex-col md:flex-row gap-4">
@@ -211,13 +268,21 @@ const AuthSection = () => {
                         value={phoneNumber}
                         onChange={setPhoneNumber}
                         defaultCountry="GH"
+                        required
                         className="w-full h-10 px-4 border border-neutral-200 rounded-lg focus-within:border-brand-navy-700 transition-colors text-neutral-800 text-sm flex items-center gap-3 bg-white"
                       />
                     </div>
                   </div>
                   <div className="flex-1 min-w-0 space-y-1.5">
                     <label className="text-neutral-500 font-bold text-[9px] uppercase tracking-wider">Email Address</label>
-                    <input type="email" placeholder="Email address" className="w-full h-10 px-4 border border-neutral-200 rounded-lg focus:outline-none focus:border-brand-navy-700 transition-colors placeholder:text-neutral-300 text-neutral-800 text-sm" />
+                    <input 
+                      type="email" 
+                      required
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="ama@example.com" 
+                      className="w-full h-10 px-4 border border-neutral-200 rounded-lg focus:outline-none focus:border-brand-navy-700 transition-colors placeholder:text-neutral-300 text-neutral-800 text-sm" 
+                    />
                   </div>
                 </div>
 
@@ -227,6 +292,10 @@ const AuthSection = () => {
                     <input
                       type={showPassword ? "text" : "password"}
                       placeholder="••••••••"
+                      required
+                      minLength={6}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
                       className="w-full h-10 px-4 border border-neutral-200 rounded-lg focus:outline-none focus:border-brand-navy-700 transition-colors text-neutral-800 text-sm"
                     />
                     <button
@@ -249,10 +318,18 @@ const AuthSection = () => {
                 </div>
 
                 <button
-                  onClick={goToDashboard}
-                  className="w-full h-10 bg-brand-gold-500 hover:bg-brand-gold-700 text-brand-navy-700 font-bold text-sm rounded-lg transition-all shadow-sm mt-1"
+                  type="submit"
+                  disabled={isLoading}
+                  className="w-full h-10 bg-brand-gold-500 hover:bg-brand-gold-700 text-brand-navy-700 font-bold text-sm rounded-lg transition-all shadow-sm mt-1 flex items-center justify-center gap-2"
                 >
-                  Continue
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>Creating account...</span>
+                    </>
+                  ) : (
+                    'Continue'
+                  )}
                 </button>
 
                 <div className="text-center mt-4">
@@ -264,7 +341,7 @@ const AuthSection = () => {
                   </p>
                 </div>
               </div>
-            </div>
+            </form>
 
             {/* Footer for SignUp */}
             <div className="flex flex-col sm:flex-row justify-between items-center text-neutral-400 text-[10px] mt-6 gap-4 shrink-0">
@@ -279,7 +356,7 @@ const AuthSection = () => {
             onBack={goToWelcome}
             onSignUp={goToSignUp}
             onForgotPassword={goToForgotPassword}
-            onLogin={goToDashboard}
+            onSuccess={handleLoginSuccess}
           />
         )}
 
@@ -288,7 +365,7 @@ const AuthSection = () => {
             onBack={goToSignUp}
             onVerify={() => {
               console.log('OTP Verified');
-              goToDashboard();
+              handleLoginSuccess();
             }}
           />
         )}
@@ -307,7 +384,7 @@ const AuthSection = () => {
           <SetPasswordSection
             onComplete={() => {
               console.log('Password set successfully');
-              goToDashboard();
+              handleLoginSuccess();
             }}
           />
         )}
