@@ -167,7 +167,7 @@ const AuthSection = () => {
             {/* Main Content */}
             <div className="max-w-lg mx-auto w-full flex-grow flex flex-col justify-center lg:justify-start lg:pt-12">
               <div className="mb-10 lg:mb-12 xl:mb-16 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
-                <h1 className="flex text-neutral-800 text-[36px] xl:text-[48px] 2xl:text-[56px] font-black mb-2 tracking-tight">Welcome</h1>
+                <h1 className="flex text-neutral-800 text-[28px] sm:text-[32px] lg:text-[38px] xl:text-[44px] font-black mb-2 tracking-tight">Welcome</h1>
                 <p className="text-neutral-500 text-[15px] lg:text-base xl:text-lg font-normal leading-relaxed max-w-sm xl:max-w-md">
                   Sign in or create an account to begin your attestation request.
                 </p>

@@ -58,7 +58,18 @@ const NewApplicationSteps = ({ onBack }) => {
   };
 
   const handleSaveStep3 = (data) => {
-    setApplicationData(prev => ({ ...prev, serviceTier: data.tier }));
+    setApplicationData(prev => ({ 
+      ...prev, 
+      serviceTier: data.tier,
+      paymentDetails: {
+        tier: data.tier,
+        price: data.price,
+        paymentMethod: data.paymentMethod,
+        momoNetwork: data.momoNetwork,
+        momoPhone: data.momoPhone,
+        cardName: data.cardName
+      }
+    }));
     if (!completedSteps.includes(3)) {
       setCompletedSteps([...completedSteps, 3]);
     }
@@ -76,11 +87,45 @@ const NewApplicationSteps = ({ onBack }) => {
     setStep4Progress(100);
   };
 
+  const [submittedApplication, setSubmittedApplication] = useState(null);
+
   const handleFinalSubmit = async () => {
     setIsSubmitting(true);
     try {
+      if (!user) throw new Error('You must be logged in to submit an application.');
+
       const appNumber = `ATT-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
       const uploadedDocUrls = [];
+      let ghanaCardUrl = null;
+      
+      console.log('Starting uploads for application:', appNumber);
+
+      // Upload Ghana Card photo from Step 1 (if present)
+      const ghanaCardPhoto = applicationData.personalDetails?.ghanaCardPhoto;
+      if (ghanaCardPhoto?.file) {
+        const ext = ghanaCardPhoto.file.name.split('.').pop();
+        const cardPath = `${user.id}/${appNumber}/ghana_card.${ext}`;
+        const { error: cardUploadErr } = await supabase.storage
+          .from('attestations')
+          .upload(cardPath, ghanaCardPhoto.file, { upsert: true, cacheControl: '3600' });
+
+        if (cardUploadErr) {
+          console.error('Ghana card upload error:', cardUploadErr);
+        } else {
+          const { data: { publicUrl } } = supabase.storage
+            .from('attestations')
+            .getPublicUrl(cardPath);
+          ghanaCardUrl = publicUrl;
+          uploadedDocUrls.push({
+            id: 'ghana_card',
+            type: 'Ghana Card',
+            name: ghanaCardPhoto.file.name,
+            url: publicUrl,
+            size: (ghanaCardPhoto.file.size / (1024 * 1024)).toFixed(2) + ' MB'
+          });
+        }
+      }
+
       for (const doc of applicationData.documents) {
         if (doc.file) {
           const fileExt = doc.file.name.split('.').pop();
@@ -89,9 +134,15 @@ const NewApplicationSteps = ({ onBack }) => {
 
           const { error: uploadError } = await supabase.storage
             .from('attestations')
-            .upload(filePath, doc.file, { upsert: true });
+            .upload(filePath, doc.file, { 
+              upsert: true,
+              cacheControl: '3600'
+            });
 
-          if (uploadError) throw uploadError;
+          if (uploadError) {
+            console.error('Storage upload error:', uploadError);
+            throw new Error(`Failed to upload document ${doc.name}: ${uploadError.message}`);
+          }
 
           const { data: { publicUrl } } = supabase.storage
             .from('attestations')
@@ -104,24 +155,53 @@ const NewApplicationSteps = ({ onBack }) => {
             url: publicUrl,
             size: doc.size
           });
+        } else if (doc.url) {
+          uploadedDocUrls.push(doc);
         }
       }
 
+      const submissionData = {
+        id: appNumber,
+        user_id: user.id,
+        // Step 1: Personal Details (individual columns + JSON backup)
+        full_name: applicationData.personalDetails?.fullName || '',
+        phone_number: applicationData.personalDetails?.phoneNumber || '',
+        dob: applicationData.personalDetails?.dob || null,
+        ghana_card_number: applicationData.personalDetails?.ghanaCardNumber || '',
+        ghana_card_url: ghanaCardUrl,
+        personal_details: applicationData.personalDetails,
+        // Step 2: Documents
+        document_type: applicationData.documentType,
+        documents: uploadedDocUrls,
+        // Step 3: Payment
+        service_tier: applicationData.serviceTier,
+        payment_details: applicationData.paymentDetails || null,
+        // Step 4: Appointment
+        appointment_details: applicationData.appointment,
+        // Meta
+        status: 'Pending review',
+        submitted_at: new Date().toISOString()
+      };
+
+      console.log('Inserting application row:', submissionData);
+
       const { error } = await supabase
         .from('applications')
-        .insert([{
-          id: appNumber,
-          user_id: user.id,
-          document_type: applicationData.documentType,
-          status: 'Submitted',
-          personal_details: applicationData.personalDetails,
-          service_tier: applicationData.serviceTier,
-          appointment_details: applicationData.appointment,
-          documents: uploadedDocUrls,
-          submitted_at: new Date().toISOString()
-        }]);
+        .insert([submissionData]);
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase insert error:', error);
+        if (error.code === '42501') {
+          throw new Error('Permission denied: You do not have permission to submit this application (RLS Policy Violation). Please ensure the applications table has an INSERT policy for authenticated users.');
+        }
+        throw error;
+      }
+
+      await supabase
+        .from('application_status_history')
+        .insert([{ application_id: appNumber, status: 'Submitted', changed_by: user.id }]);
+
+      setSubmittedApplication(submissionData);
       setIsSubmitted(true);
     } catch (error) {
       console.error('Error submitting application:', error);
@@ -182,7 +262,7 @@ const NewApplicationSteps = ({ onBack }) => {
   ];
 
   if (isSubmitted) {
-    return <ApplicationSubmittedSuccess onGoHome={onBack} />;
+    return <ApplicationSubmittedSuccess onGoHome={onBack} onTrack={onBack} application={submittedApplication} />;
   }
 
   return (

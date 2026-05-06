@@ -106,23 +106,23 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      <div className="flex items-center justify-between">
+    <div className="space-y-4 lg:space-y-8 animate-fade-in">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-black text-brand-navy-800 tracking-tight">System Overview</h1>
-          <p className="text-neutral-500 text-sm mt-1">Live updates from the Document Attestation Portal.</p>
+          <h1 className="text-xl lg:text-2xl font-black text-brand-navy-800 tracking-tight">System Overview</h1>
+          <p className="text-neutral-500 text-sm mt-0.5">Live updates from the Document Attestation Portal.</p>
         </div>
         <div className="flex items-center gap-3">
            <div className="flex items-center gap-2 px-3 py-1.5 bg-emerald-50 rounded-full border border-emerald-100">
              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-             <span className="text-[11px] font-black text-emerald-700 uppercase tracking-wider">Live Sync Active</span>
+             <span className="text-[10px] font-black text-emerald-700 uppercase tracking-wider">Live Sync Active</span>
            </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-5">
         {stats.map((stat) => (
-          <div key={stat.name} className="bg-white p-6 rounded-3xl border border-neutral-100 shadow-sm hover:shadow-xl hover:border-brand-gold-500/20 transition-all group">
+          <div key={stat.name} className="bg-white p-4 lg:p-5 rounded-2xl border border-neutral-100 shadow-sm hover:shadow-xl hover:border-brand-gold-500/20 transition-all group">
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 bg-neutral-50 group-hover:bg-brand-gold-500/10 rounded-2xl transition-colors">
                 <stat.icon className="w-6 h-6 text-brand-navy-600 group-hover:text-brand-gold-600" />
@@ -142,10 +142,10 @@ const AdminDashboard = () => {
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-8">
-          <div className="bg-white rounded-3xl border border-neutral-100 shadow-sm overflow-hidden">
-            <div className="p-6 border-b border-neutral-100 flex items-center justify-between bg-neutral-50/30">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+        <div className="lg:col-span-2 space-y-4 lg:space-y-6">
+          <div className="bg-white rounded-2xl border border-neutral-100 shadow-sm overflow-hidden">
+            <div className="px-4 lg:px-6 py-4 border-b border-neutral-100 flex items-center justify-between bg-neutral-50/30">
               <h2 className="text-lg font-black text-brand-navy-800 tracking-tight">Recent Applications</h2>
               <button className="text-xs font-black text-brand-gold-600 hover:text-brand-gold-700 uppercase tracking-widest">View all</button>
             </div>
@@ -153,23 +153,23 @@ const AdminDashboard = () => {
               <table className="w-full text-left">
                 <thead>
                   <tr className="text-[10px] font-black text-neutral-400 uppercase tracking-widest border-b border-neutral-50">
-                    <th className="px-6 py-4">ID</th>
-                    <th className="px-6 py-4">Document Type</th>
-                    <th className="px-6 py-4">Status</th>
-                    <th className="px-6 py-4">Submitted</th>
+                    <th className="px-3 lg:px-6 py-3">ID</th>
+                    <th className="px-3 lg:px-6 py-3 hidden sm:table-cell">Document Type</th>
+                    <th className="px-3 lg:px-6 py-3">Status</th>
+                    <th className="px-3 lg:px-6 py-3 hidden md:table-cell">Submitted</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-neutral-50">
                   {recentApplications.map((app) => (
                     <tr key={app.id} className="hover:bg-neutral-50/30 transition-colors cursor-pointer group">
-                      <td className="px-6 py-4 text-xs font-black text-neutral-600 group-hover:text-brand-navy-800">#{app.id.slice(0, 8)}</td>
-                      <td className="px-6 py-4 text-sm text-neutral-500 font-bold">{app.document_type}</td>
-                      <td className="px-6 py-4">
-                        <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider border ${getStatusStyle(app.status)}`}>
+                      <td className="px-3 lg:px-6 py-3 text-xs font-black text-neutral-600 group-hover:text-brand-navy-800">#{app.id.slice(0, 8)}</td>
+                      <td className="px-3 lg:px-6 py-3 text-sm text-neutral-500 font-bold hidden sm:table-cell">{app.document_type}</td>
+                      <td className="px-3 lg:px-6 py-3">
+                        <span className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider border ${getStatusStyle(app.status)}`}>
                           {app.status}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-neutral-400 font-bold">
+                      <td className="px-3 lg:px-6 py-3 text-xs text-neutral-400 font-bold hidden md:table-cell">
                         {new Date(app.submitted_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
                       </td>
                     </tr>
@@ -180,8 +180,8 @@ const AdminDashboard = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-3xl border border-neutral-100 shadow-sm overflow-hidden">
-           <div className="p-6 border-b border-neutral-100 flex items-center justify-between bg-brand-navy-800">
+        <div className="bg-white rounded-2xl border border-neutral-100 shadow-sm overflow-hidden">
+           <div className="px-4 lg:px-6 py-4 border-b border-neutral-100 flex items-center justify-between bg-brand-navy-800">
               <h2 className="text-lg font-bold text-white tracking-tight">Upcoming Appointments</h2>
               <CalendarIcon className="w-5 h-5 text-brand-gold-500" />
             </div>

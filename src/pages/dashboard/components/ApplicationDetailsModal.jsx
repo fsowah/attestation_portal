@@ -1,6 +1,8 @@
-import React from 'react';
-import { X, FileText, Calendar, CreditCard, User, Download, ExternalLink, Printer } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, FileText, Calendar, CreditCard, User, Download, ExternalLink, Printer, Clock } from 'lucide-react';
 import MoFACrest from '../../../assets/images/Logo_crest.png';
+import { supabase } from '../../../supabaseClient';
+import StatusTimeline from '../../../components/StatusTimeline';
 
 const ApplicationDetailsModal = ({ application, onClose }) => {
   if (!application) return null;
@@ -10,16 +12,28 @@ const ApplicationDetailsModal = ({ application, onClose }) => {
       case 'Submitted':
         return 'bg-blue-50 text-blue-700 border-blue-100';
       case 'Pending review':
-        return 'bg-[#fef6b8] text-[#7a6209] border-[#f5e6a0]';
+        return 'bg-amber-50 text-amber-700 border-amber-100';
       case 'Approved':
       case 'Completed':
-        return 'bg-[#e5f4ed] text-[#004728] border-[#c3e6d5]';
+        return 'bg-emerald-50 text-emerald-700 border-emerald-100';
       case 'Rejected':
         return 'bg-red-50 text-red-700 border-red-100';
       default:
         return 'bg-neutral-100 text-neutral-600 border-neutral-200';
     }
   };
+
+  const [history, setHistory] = useState([]);
+
+  useEffect(() => {
+    if (!application?.id) return;
+    supabase
+      .from('application_status_history')
+      .select('*')
+      .eq('application_id', application.id)
+      .order('changed_at', { ascending: true })
+      .then(({ data }) => setHistory(data || []));
+  }, [application?.id]);
 
   const handlePrint = () => {
     window.print();
@@ -74,28 +88,28 @@ const ApplicationDetailsModal = ({ application, onClose }) => {
                 <div className="flex flex-col gap-1">
                   <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-widest">Submitted On</span>
                   <span className="text-[14px] font-bold text-brand-navy-900">
-                    {application.submission_date ? new Date(application.submission_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }) : 'N/A'}
+                    {application.submitted_at ? new Date(application.submitted_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }) : 'N/A'}
                   </span>
                 </div>
               </div>
 
-              <div className="flex flex-col gap-4 p-6 bg-brand-navy-900 rounded-2xl text-white">
+              <div className="flex flex-col gap-4 p-6 bg-neutral-50 rounded-2xl border border-neutral-100">
                 <div className="flex items-center gap-3 mb-2">
                   <Calendar className="w-5 h-5 text-brand-gold-500" />
-                  <span className="text-[13px] font-bold">Appointment</span>
+                  <span className="text-[13px] font-bold text-black">Appointment</span>
                 </div>
                 {application.appointment_details ? (
                   <div className="flex flex-col gap-3">
                     <div className="flex flex-col">
-                      <span className="text-[20px] font-bold tracking-tight">{application.appointment_details.date}</span>
-                      <span className="text-[13px] opacity-70 font-medium">{application.appointment_details.time}</span>
+                      <span className="text-[20px] font-bold text-black tracking-tight">{application.appointment_details.date}</span>
+                      <span className="text-[13px] text-neutral-500 font-medium">{application.appointment_details.time}</span>
                     </div>
-                    <div className="text-[11px] bg-white/10 p-3 rounded-lg border border-white/10 leading-relaxed">
+                    <div className="text-[11px] text-black bg-white p-3 rounded-lg border border-neutral-200 leading-relaxed">
                        Main Ministry Building, Independence Ave, Accra. Please arrive 15 mins early.
                     </div>
                   </div>
                 ) : (
-                  <p className="text-sm opacity-60 italic">No appointment scheduled</p>
+                  <p className="text-sm text-neutral-400 italic">No appointment scheduled</p>
                 )}
               </div>
             </div>
@@ -112,22 +126,66 @@ const ApplicationDetailsModal = ({ application, onClose }) => {
                 <div className="grid grid-cols-2 gap-y-6 gap-x-8">
                   <div className="flex flex-col gap-1">
                     <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Full Name</span>
-                    <span className="text-[14px] font-bold text-neutral-700">{application.personal_details?.fullName}</span>
+                    <span className="text-[14px] font-bold text-black">{application.full_name || application.personal_details?.fullName || 'N/A'}</span>
                   </div>
                   <div className="flex flex-col gap-1">
                     <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Phone Number</span>
-                    <span className="text-[14px] font-bold text-neutral-700">{application.personal_details?.phone}</span>
+                    <span className="text-[14px] font-bold text-black">{application.phone_number || application.personal_details?.phoneNumber || 'N/A'}</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Date of Birth</span>
+                    <span className="text-[14px] font-bold text-black">
+                      {application.dob 
+                        ? new Date(application.dob).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' }) 
+                        : application.personal_details?.dob || 'N/A'}
+                    </span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Ghana Card Number</span>
+                    <span className="text-[14px] font-bold text-black">{application.ghana_card_number || application.personal_details?.ghanaCardNumber || 'N/A'}</span>
                   </div>
                   <div className="flex flex-col gap-1">
                     <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Document Type</span>
-                    <span className="text-[14px] font-bold text-neutral-700">{application.document_type}</span>
+                    <span className="text-[14px] font-bold text-black">{application.document_type || 'N/A'}</span>
                   </div>
                   <div className="flex flex-col gap-1">
                     <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Service Tier</span>
-                    <span className="text-[14px] font-bold text-neutral-700">{application.service_tier}</span>
+                    <span className="text-[14px] font-bold text-black">{application.service_tier || 'N/A'}</span>
                   </div>
                 </div>
               </section>
+
+              {/* Payment Details */}
+              {application.payment_details && (
+                <section className="flex flex-col gap-5">
+                  <div className="flex items-center gap-3 border-b border-neutral-100 pb-3">
+                    <CreditCard className="w-5 h-5 text-neutral-400" />
+                    <h3 className="text-[16px] font-bold text-brand-navy-900">Payment Information</h3>
+                  </div>
+                  <div className="grid grid-cols-2 gap-y-6 gap-x-8">
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Payment Method</span>
+                      <span className="text-[14px] font-bold text-black capitalize">{application.payment_details.paymentMethod === 'momo' ? 'Mobile Money' : 'Credit Card'}</span>
+                    </div>
+                    <div className="flex flex-col gap-1">
+                      <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Amount Paid</span>
+                      <span className="text-[14px] font-bold text-black">GHS {application.payment_details.price}</span>
+                    </div>
+                    {application.payment_details.momoNetwork && (
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">MoMo Network</span>
+                        <span className="text-[14px] font-bold text-black uppercase">{application.payment_details.momoNetwork}</span>
+                      </div>
+                    )}
+                    {application.payment_details.momoPhone && (
+                      <div className="flex flex-col gap-1">
+                        <span className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">MoMo Phone</span>
+                        <span className="text-[14px] font-bold text-black">{application.payment_details.momoPhone}</span>
+                      </div>
+                    )}
+                  </div>
+                </section>
+              )}
 
               {/* Uploaded Documents */}
               <section className="flex flex-col gap-5">
@@ -143,7 +201,7 @@ const ApplicationDetailsModal = ({ application, onClose }) => {
                           <FileText className="w-5 h-5 text-neutral-400 group-hover:text-brand-gold-600" />
                         </div>
                         <div className="flex flex-col">
-                          <span className="text-[13px] font-bold text-neutral-800 tracking-tight truncate max-w-[120px]">{doc.name}</span>
+                          <span className="text-[13px] font-bold text-black tracking-tight truncate max-w-[120px]">{doc.name}</span>
                           <span className="text-[10px] text-neutral-400 font-medium uppercase tracking-wider">{doc.type}</span>
                         </div>
                       </div>
@@ -161,6 +219,15 @@ const ApplicationDetailsModal = ({ application, onClose }) => {
                     <p className="text-sm text-neutral-400 italic">No documents found</p>
                   )}
                 </div>
+              </section>
+
+              {/* Status History */}
+              <section className="flex flex-col gap-5">
+                <div className="flex items-center gap-3 border-b border-neutral-100 pb-3">
+                  <Clock className="w-5 h-5 text-neutral-400" />
+                  <h3 className="text-[16px] font-bold text-brand-navy-900">Status History</h3>
+                </div>
+                <StatusTimeline history={history} />
               </section>
 
             </div>

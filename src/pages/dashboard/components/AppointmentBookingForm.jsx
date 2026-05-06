@@ -158,7 +158,7 @@ const AppointmentBookingForm = ({ onSave, onProgressUpdate, initialData }) => {
 
   return (
     <div className="w-full bg-white animate-fade-in">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 xl:gap-20">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-10">
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between mb-2">
@@ -250,7 +250,7 @@ const AppointmentBookingForm = ({ onSave, onProgressUpdate, initialData }) => {
                <p className="text-neutral-400 text-xs font-medium">{selectedDate ? 'No available slots for this date' : 'Please select a date first'}</p>
             </div>
           ) : (
-            <div className="grid grid-cols-2 gap-3 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-2 gap-3 max-h-[280px] overflow-y-auto pr-1 custom-scrollbar">
               {availableSlots.map((slot) => (
                 <button
                   key={slot.id}

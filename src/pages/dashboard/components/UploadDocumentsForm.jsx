@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Paperclip, ChevronDown, UploadCloud, Trash2, FileText, AlertCircle } from 'lucide-react';
+import { Paperclip, ChevronDown, UploadCloud, Trash2, FileText, AlertCircle, ExternalLink } from 'lucide-react';
 import SupremeSeal from '../../../assets/images/Vector.svg';
 
 const UploadDocumentsForm = ({ onSave, onProgressUpdate, initialData }) => {
@@ -152,17 +152,61 @@ const UploadDocumentsForm = ({ onSave, onProgressUpdate, initialData }) => {
               </div>
             </div>
 
-            <button 
-              onClick={handleUploadClick}
-              disabled={uploadedDocs.length >= 5}
-              className={`w-full h-12 rounded-lg text-sm font-bold transition-all shadow-sm ${
-                uploadedDocs.length < 5 
-                  ? 'bg-brand-navy-800 text-white hover:bg-brand-navy-900' 
-                  : 'bg-neutral-100 text-neutral-400 cursor-not-allowed'
-              }`}
-            >
-              Add another document
-            </button>
+            <div className="flex flex-col gap-4">
+              <button 
+                onClick={handleUploadClick}
+                disabled={uploadedDocs.length >= 5}
+                className={`w-full h-12 rounded-lg text-sm font-bold transition-all shadow-sm ${
+                  uploadedDocs.length < 5 
+                    ? 'bg-brand-navy-800 text-white hover:bg-brand-navy-900' 
+                    : 'bg-neutral-100 text-neutral-400 cursor-not-allowed'
+                }`}
+              >
+                Add another document
+              </button>
+
+              <div className="relative flex items-center gap-4 py-2">
+                <div className="flex-grow h-px bg-neutral-100"></div>
+                <span className="text-[10px] font-bold text-neutral-300 uppercase tracking-widest">OR</span>
+                <div className="flex-grow h-px bg-neutral-100"></div>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2 mb-1">
+                  <ExternalLink className="w-3.5 h-3.5 text-neutral-400" />
+                  <span className="text-[11px] font-bold text-neutral-500 uppercase tracking-wider">Add external link (Fallback)</span>
+                </div>
+                <div className="flex gap-2">
+                  <input 
+                    type="url"
+                    placeholder="https://third-party-storage.com/file.pdf"
+                    id="external-link-input"
+                    className="flex-grow h-10 px-4 bg-white rounded-lg border border-neutral-200 outline-none text-sm placeholder:text-neutral-300 focus:border-brand-gold-300 transition-colors"
+                  />
+                  <button 
+                    onClick={() => {
+                      const input = document.getElementById('external-link-input');
+                      const url = input.value;
+                      if (!url) return;
+                      
+                      const newDoc = {
+                        id: Date.now(),
+                        type: selectedType,
+                        name: 'External Document',
+                        url: url,
+                        size: 'N/A'
+                      };
+                      setUploadedDocs([...uploadedDocs, newDoc]);
+                      input.value = '';
+                    }}
+                    disabled={uploadedDocs.length >= 5}
+                    className="px-4 h-10 bg-neutral-50 hover:bg-neutral-100 text-brand-navy-800 rounded-lg text-[12px] font-bold border border-neutral-200 transition-all active:scale-95 whitespace-nowrap"
+                  >
+                    Add Link
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
