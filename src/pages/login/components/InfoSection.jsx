@@ -2,6 +2,7 @@ import React from 'react';
 
 import vector0 from '../../../assets/images/Vector.svg';
 import vector1 from '../../../assets/images/vector1.svg';
+import LogoCrest from '../../../assets/images/Logo_crest.png';
 
 const InfoSection = () => {
   const steps = [
@@ -35,7 +36,7 @@ const InfoSection = () => {
         {/* Logo and Title */}
         <div className="flex items-center gap-4 mb-10">
           <div className="p-1.5 bg-white/10 rounded-xl backdrop-blur-md border border-white/20 shadow-2xl">
-            <img src={"http://localhost:3845/assets/b2bdf8f7c8828484728deaa27435bbdd1780dafc.png"} alt="MoFA Logo" className="h-10 w-auto object-contain" />
+            <img src={LogoCrest} alt="MoFA Logo" className="h-10 w-auto object-contain" />
           </div>
           <div className="flex flex-col">
             <h2 className="text-white font-bold text-base tracking-tight leading-tight">Ministry of Foreign Affairs</h2>
@@ -44,13 +45,13 @@ const InfoSection = () => {
         </div>
 
         {/* Tagline Section */}
-        <div className="mb-8">
-          <h1 className="text-white text-[40px] xl:text-[44px] font-black leading-[1.1] mb-4 tracking-tighter">
+        <div className="mb-8 xl:mb-12">
+          <h1 className="text-white text-[40px] xl:text-[54px] 2xl:text-[64px] font-black leading-[1.1] mb-4 tracking-tighter">
             Secure.<br />
             Transparent.<br />
             Efficient.
           </h1>
-          <p className="text-neutral-100/70 text-[13px] max-w-sm font-medium leading-relaxed">
+          <p className="text-neutral-100/70 text-[13px] xl:text-[15px] max-w-sm xl:max-w-md font-medium leading-relaxed">
             The official MFA Document Attestation Portal lets you submit, track, and collect attested documents from anywhere, at any time.
           </p>
         </div>
@@ -70,7 +71,7 @@ const InfoSection = () => {
               </div>
 
               {/* Step Title */}
-              <p className="text-white/90 font-bold text-base">
+              <p className="text-white/90 font-bold text-base xl:text-lg">
                 {step.title}
               </p>
             </div>
