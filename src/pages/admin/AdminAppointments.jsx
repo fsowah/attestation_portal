@@ -282,10 +282,10 @@ alter publication supabase_realtime add table appointment_slots;`;
   }
 
   return (
-    <div className="space-y-8 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-4 lg:space-y-6 animate-fade-in">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-black text-brand-navy-800 tracking-tight">Appointment Manager</h1>
+          <h1 className="text-xl lg:text-2xl font-black text-brand-navy-800 tracking-tight">Appointment Manager</h1>
           <p className="text-neutral-500 text-sm mt-1 font-medium">Configure available booking windows for applicants.</p>
         </div>
         <div className="flex gap-3">
@@ -307,8 +307,8 @@ alter publication supabase_realtime add table appointment_slots;`;
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-1 bg-white rounded-3xl border border-neutral-100 shadow-sm p-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
+        <div className="lg:col-span-1 bg-white rounded-2xl border border-neutral-100 shadow-sm p-4 lg:p-6">
           <div className="flex items-center justify-between mb-6">
             <h3 className="font-black text-brand-navy-800 tracking-tight">
               {viewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
@@ -334,12 +334,12 @@ alter publication supabase_realtime add table appointment_slots;`;
           </div>
         </div>
 
-        <div className="lg:col-span-2 bg-white rounded-3xl border border-neutral-100 shadow-sm overflow-hidden min-h-[500px] relative">
-          <div className="p-8 border-b border-neutral-100 flex items-center justify-between bg-neutral-50/30">
-            <div className="flex items-center gap-3">
-              <CalendarIcon className="w-6 h-6 text-brand-gold-600" />
-              <h2 className="font-black text-brand-navy-800 tracking-tight text-xl">
-                Schedule for {new Date(selectedDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-neutral-100 shadow-sm overflow-hidden min-h-[400px] relative">
+          <div className="px-4 lg:px-6 py-4 border-b border-neutral-100 flex items-center justify-between bg-neutral-50/30">
+            <div className="flex items-center gap-2 min-w-0">
+              <CalendarIcon className="w-5 h-5 text-brand-gold-600 shrink-0" />
+              <h2 className="font-black text-brand-navy-800 tracking-tight text-base lg:text-lg truncate">
+                {new Date(selectedDate).toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
               </h2>
             </div>
             {isLoading && <Loader2 className="w-6 h-6 text-brand-gold-500 animate-spin" />}
@@ -349,25 +349,25 @@ alter publication supabase_realtime add table appointment_slots;`;
             {slots.map((slot) => {
               const status = getStatus(slot);
               return (
-                <div key={slot.id} className="p-6 flex items-center justify-between hover:bg-neutral-50/30 transition-colors group">
-                  <div className="flex items-center gap-8">
-                    <div className="flex items-center gap-4">
-                      <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all ${slot.is_available ? 'bg-brand-navy-50 text-brand-navy-600' : 'bg-neutral-100 text-neutral-400'}`}>
-                        <Clock className="w-6 h-6" />
+                <div key={slot.id} className="px-3 lg:px-5 py-3 flex items-center justify-between hover:bg-neutral-50/30 transition-colors group">
+                  <div className="flex items-center gap-3 lg:gap-6">
+                    <div className="flex items-center gap-3">
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all shrink-0 ${slot.is_available ? 'bg-brand-navy-50 text-brand-navy-600' : 'bg-neutral-100 text-neutral-400'}`}>
+                        <Clock className="w-4 h-4" />
                       </div>
                       <div className="flex flex-col">
-                        <span className="font-black text-brand-navy-800 text-lg">{slot.time}</span>
-                        <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest">GMT Standard Time</span>
+                        <span className="font-black text-brand-navy-800 text-sm lg:text-base">{slot.time}</span>
+                        <span className="text-[10px] font-black text-neutral-400 uppercase tracking-widest hidden sm:block">GMT Standard</span>
                       </div>
                     </div>
-                    <div className="hidden md:flex items-center gap-3 text-neutral-500 bg-neutral-50 px-4 py-2 rounded-xl border border-neutral-100">
-                      <Users className="w-4 h-4 opacity-40" />
-                      <span className="text-xs font-black">{slot.count} / {slot.capacity} <span className="opacity-40 uppercase tracking-tighter">Booked</span></span>
+                    <div className="hidden md:flex items-center gap-2 text-neutral-500 bg-neutral-50 px-3 py-1.5 rounded-xl border border-neutral-100">
+                      <Users className="w-3.5 h-3.5 opacity-40" />
+                      <span className="text-xs font-black">{slot.count}/{slot.capacity} <span className="opacity-40 uppercase tracking-tighter">Booked</span></span>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-4">
-                    <span className={`text-[10px] font-black uppercase tracking-[0.15em] px-4 py-2 rounded-full border shadow-sm ${status.style}`}>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border shadow-sm ${status.style}`}>
                       {status.label}
                     </span>
                     <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-all scale-95 group-hover:scale-100">

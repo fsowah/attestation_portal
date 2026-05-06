@@ -2,9 +2,17 @@ import React from 'react';
 import { CheckCircle } from 'lucide-react';
 import MoFACrest from '../../../assets/images/Logo_crest.png';
 
-const ApplicationSubmittedSuccess = ({ onGoHome }) => {
+const ApplicationSubmittedSuccess = ({ onGoHome, onTrack, application }) => {
+  const applicantName = application?.personal_details?.fullName || 'Applicant';
+  const appId = application?.id || 'ATT-XXXX-XXXXX';
+  const docType = application?.document_type || 'Document';
+  const tier = application?.service_tier || 'Standard';
+  const fee = tier.toLowerCase().includes('express') ? 'GHS 450' : 'GHS 200';
+  const appointmentDate = application?.appointment_details?.date || 'TBD';
+  const appointmentTime = application?.appointment_details?.time || 'TBD';
+
   return (
-    <div className="flex flex-col items-center justify-center py-8 px-4 animate-fade-in-up relative overflow-hidden min-h-[700px]">
+    <div className="flex flex-col items-center justify-center py-8 px-4 animate-fade-in-up relative overflow-hidden min-h-[60vh]">
       {/* Background Decals (from Figma pattern) */}
       <div className="absolute inset-0 opacity-[0.02] pointer-events-none flex items-center justify-center overflow-hidden">
         <div className="grid grid-cols-4 gap-40 rotate-[15deg] scale-150">
@@ -35,7 +43,7 @@ const ApplicationSubmittedSuccess = ({ onGoHome }) => {
       {/* 3. Application ID Bar (More compact) */}
       <div className="w-full max-w-[540px] bg-[#F7FCF9] border border-[#E6F4ED] rounded-[10px] p-4 mb-4 flex items-center justify-between shadow-sm shadow-emerald-900/5">
         <span className="text-[12px] font-bold text-neutral-400 uppercase tracking-wider">APPLICATION ID</span>
-        <span className="text-[20px] font-bold text-[#0A1628]">ATT-2026-00847</span>
+        <span className="text-[20px] font-bold text-[#0A1628]">{appId}</span>
       </div>
 
       {/* 4. Submission Details Card (More compact) */}
@@ -43,14 +51,12 @@ const ApplicationSubmittedSuccess = ({ onGoHome }) => {
         <h3 className="text-[12px] font-bold text-neutral-400 uppercase tracking-wider mb-1">SUBMISSION DETAILS</h3>
         
         <div className="flex flex-col gap-3.5">
-          <DetailRow label="Applicant" value="Ama Dziedzom" />
-          <DetailRow label="Document 1" value="University transcript" />
-          <DetailRow label="Document 1" value="University transcript" />
-          <DetailRow label="Total documents" value="2 documents" />
-          <DetailRow label="Service tier" value="Standard 3 to 5 working days" />
-          <DetailRow label="Fee paid" value="GHS 450" />
-          <DetailRow label="Payment method" value="Mobile Money" />
-          <DetailRow label="Appointment date" value="9:00am 9 April 2026" />
+          <DetailRow label="Applicant" value={applicantName} />
+          <DetailRow label="Document Type" value={docType} />
+          <DetailRow label="Service tier" value={tier} />
+          <DetailRow label="Fee paid" value={fee} />
+          <DetailRow label="Payment method" value="Mobile Money / Card" />
+          <DetailRow label="Appointment" value={`${appointmentDate} at ${appointmentTime}`} />
           
           <div className="flex items-center justify-between pt-0.5">
             <span className="text-[13px] text-neutral-400 font-medium">Status</span>
@@ -64,7 +70,7 @@ const ApplicationSubmittedSuccess = ({ onGoHome }) => {
       {/* 5. Final CTA (Scaled down) */}
       <div className="mt-8 w-full max-w-[400px]">
         <button 
-          onClick={onGoHome}
+          onClick={onTrack || onGoHome}
           className="w-full bg-[#0A1628] hover:bg-[#111e35] text-white h-[52px] rounded-lg text-[14px] font-bold transition-all active:scale-[0.99] shadow-lg shadow-navy-900/10"
         >
           Track my application

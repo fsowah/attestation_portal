@@ -33,57 +33,57 @@ const ServiceTierPaymentForm = ({ onSave, onProgressUpdate, initialData }) => {
 
   return (
     <div className="w-full bg-white animate-fade-in">
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 xl:gap-x-20 2xl:gap-x-32 gap-y-12">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 xl:gap-x-14 gap-y-8">
         {/* Left Column: Service Tier & Summary */}
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-4">
-            <div 
+            <div
               onClick={() => setServiceTier('standard')}
-              className={`h-[88px] px-6 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between group ${
-                serviceTier === 'standard' 
-                  ? 'bg-white border-brand-gold-500' 
+              className={`px-4 py-4 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between gap-3 group ${
+                serviceTier === 'standard'
+                  ? 'bg-white border-brand-gold-500'
                   : 'bg-[#F9F8F7] border-transparent'
               }`}
             >
-              <div className="flex items-center gap-4">
-                <div className={`w-[18px] h-[18px] rounded-full border-2 flex items-center justify-center transition-colors ${
+              <div className="flex items-center gap-3">
+                <div className={`w-4 h-4 shrink-0 rounded-full border-2 flex items-center justify-center transition-colors ${
                   serviceTier === 'standard' ? 'border-brand-gold-500 bg-brand-gold-500' : 'border-neutral-200 bg-white'
                 }`}>
-                  {serviceTier === 'standard' && <div className="w-2 h-2 bg-[#0A1628] rounded-full" />}
+                  {serviceTier === 'standard' && <div className="w-1.5 h-1.5 bg-[#0A1628] rounded-full" />}
                 </div>
                 <span className="text-[14px] font-bold text-neutral-800">Standard</span>
               </div>
-              <div className="flex items-center gap-6">
-                <span className="text-[13px] text-neutral-400 font-medium tracking-tight">3 – 5 working days</span>
-                <span className="text-[14px] font-bold text-neutral-300 tracking-tight">GHS 200</span>
+              <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-4 text-right sm:text-left">
+                <span className="text-[12px] text-neutral-400 font-medium">3 – 5 working days</span>
+                <span className="text-[14px] font-bold text-neutral-300">GHS 200</span>
               </div>
             </div>
 
-            <div 
+            <div
               onClick={() => setServiceTier('express')}
-              className={`h-[88px] px-6 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between group ${
-                serviceTier === 'express' 
-                  ? 'bg-white border-brand-gold-500' 
+              className={`px-4 py-4 rounded-xl border-2 transition-all cursor-pointer flex items-center justify-between gap-3 group ${
+                serviceTier === 'express'
+                  ? 'bg-white border-brand-gold-500'
                   : 'bg-[#F9F8F7] border-transparent'
               }`}
             >
-              <div className="flex items-center gap-4">
-                <div className={`w-[18px] h-[18px] rounded-full border-2 flex items-center justify-center transition-colors ${
+              <div className="flex items-center gap-3">
+                <div className={`w-4 h-4 shrink-0 rounded-full border-2 flex items-center justify-center transition-colors ${
                   serviceTier === 'express' ? 'border-brand-gold-500 bg-brand-gold-500' : 'border-neutral-200 bg-white'
                 }`}>
-                  {serviceTier === 'express' && <div className="w-2 h-2 bg-[#0A1628] rounded-full" />}
+                  {serviceTier === 'express' && <div className="w-1.5 h-1.5 bg-[#0A1628] rounded-full" />}
                 </div>
                 <span className="text-[14px] font-bold text-neutral-800">Express</span>
               </div>
-              <div className="flex items-center gap-6">
-                <span className="text-[13px] text-neutral-400 font-medium tracking-tight">24 to 48 hours</span>
-                <span className="text-[14px] font-bold text-neutral-300 tracking-tight">GHS 450</span>
+              <div className="flex flex-col sm:flex-row items-end sm:items-center gap-1 sm:gap-4 text-right sm:text-left">
+                <span className="text-[12px] text-neutral-400 font-medium">24 to 48 hours</span>
+                <span className="text-[14px] font-bold text-neutral-300">GHS 450</span>
               </div>
             </div>
           </div>
 
           {/* Order Summary */}
-          <div className="bg-[#0A1628] text-white rounded-xl p-8 mt-2 h-[260px] flex flex-col relative overflow-hidden">
+          <div className="bg-[#0A1628] text-white rounded-xl p-6 mt-2 flex flex-col relative overflow-hidden">
             <div className="absolute top-0 right-0 p-8 opacity-5">
               <CreditCard className="w-24 h-24" />
             </div>
@@ -108,26 +108,26 @@ const ServiceTierPaymentForm = ({ onSave, onProgressUpdate, initialData }) => {
         </div>
 
         {/* Right Column: Payment Method */}
-        <div className="flex flex-col gap-6 lg:pl-10">
+        <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-5">
             <h4 className="text-[14px] font-bold text-brand-navy-800">Payment method</h4>
             
-            <div className="flex items-center gap-4">
-              <button 
+            <div className="flex items-center gap-3">
+              <button
                 onClick={() => setPaymentMethod('momo')}
-                className={`w-[140px] h-[44px] rounded-lg text-sm font-bold transition-all ${
+                className={`flex-1 h-10 rounded-lg text-sm font-bold transition-all ${
                   paymentMethod === 'momo' ? 'bg-[#0A1628] text-white' : 'bg-[#F9F8F7] text-neutral-500 hover:bg-neutral-100'
                 }`}
               >
-                Mobile money
+                Mobile Money
               </button>
-              <button 
+              <button
                 onClick={() => setPaymentMethod('card')}
-                className={`w-[140px] h-[44px] rounded-lg text-sm font-bold transition-all ${
+                className={`flex-1 h-10 rounded-lg text-sm font-bold transition-all ${
                   paymentMethod === 'card' ? 'bg-[#0A1628] text-white' : 'bg-[#F9F8F7] text-neutral-500 hover:bg-neutral-100'
                 }`}
               >
-                Credit card
+                Credit Card
               </button>
             </div>
 
@@ -202,7 +202,14 @@ const ServiceTierPaymentForm = ({ onSave, onProgressUpdate, initialData }) => {
               if (!hasPaid) {
                 setHasPaid(true);
               } else {
-                onSave({ tier: pricing[serviceTier].label });
+                onSave({ 
+                  tier: pricing[serviceTier].label, 
+                  price: totalPrice,
+                  paymentMethod,
+                  momoNetwork: paymentMethod === 'momo' ? momoNetwork : null,
+                  momoPhone: paymentMethod === 'momo' ? phoneNumber : null,
+                  cardName: paymentMethod === 'card' ? cardName : null
+                });
               }
             }}
             className={`w-full h-[54px] rounded-lg text-[15px] font-bold transition-all mt-6 flex items-center justify-center gap-2.5 shadow-md active:scale-[0.98] ${

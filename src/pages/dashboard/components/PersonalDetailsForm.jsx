@@ -10,8 +10,11 @@ const PersonalDetailsForm = ({ onSave, onProgressUpdate, initialData }) => {
     ghanaCardPhoto: initialData?.ghanaCardPhoto || null,
     agreed: initialData?.agreed || false
   });
+  const [ghanaCardError, setGhanaCardError] = useState('');
   const dateInputRef = useRef(null);
   const fileInputRef = useRef(null);
+
+  const isGhanaCardValid = (value) => /^GHA-\d{9}-\d$/.test(value);
 
   // Calculate progress based on filled fields
   useEffect(() => {
@@ -19,7 +22,7 @@ const PersonalDetailsForm = ({ onSave, onProgressUpdate, initialData }) => {
       formData.fullName,
       formData.phoneNumber,
       formData.dob,
-      formData.ghanaCardNumber,
+      isGhanaCardValid(formData.ghanaCardNumber), // only counts if format is correct
       formData.ghanaCardPhoto,
       formData.agreed
     ];
@@ -27,7 +30,7 @@ const PersonalDetailsForm = ({ onSave, onProgressUpdate, initialData }) => {
       if (typeof field === 'boolean') return field === true;
       return field !== null && field !== '';
     }).length;
-    
+
     const progress = Math.round((filledFields / fields.length) * 100);
     if (onProgressUpdate) {
       onProgressUpdate(progress);
@@ -36,10 +39,16 @@ const PersonalDetailsForm = ({ onSave, onProgressUpdate, initialData }) => {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+    const newValue = type === 'checkbox' ? checked : value;
+    setFormData(prev => ({ ...prev, [name]: newValue }));
+
+    if (name === 'ghanaCardNumber') {
+      if (value && !isGhanaCardValid(value)) {
+        setGhanaCardError('Format must be GHA-XXXXXXXXX-X (9 digits, then 1 digit)');
+      } else {
+        setGhanaCardError('');
+      }
+    }
   };
 
   const handleFileChange = (e) => {
@@ -76,7 +85,7 @@ const PersonalDetailsForm = ({ onSave, onProgressUpdate, initialData }) => {
 
   // Helper to get current progress for UI
   const calculateInternalProgress = () => {
-    const fields = [formData.fullName, formData.phoneNumber, formData.dob, formData.ghanaCardNumber, formData.ghanaCardPhoto, formData.agreed];
+    const fields = [formData.fullName, formData.phoneNumber, formData.dob, isGhanaCardValid(formData.ghanaCardNumber), formData.ghanaCardPhoto, formData.agreed];
     const filled = fields.filter(f => typeof f === 'boolean' ? f : (f !== null && f !== '')).length;
     return Math.round((filled / fields.length) * 100);
   };
@@ -108,7 +117,7 @@ const PersonalDetailsForm = ({ onSave, onProgressUpdate, initialData }) => {
       </div>
 
       {/* Form Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-12 xl:gap-x-20 2xl:gap-x-32 gap-y-5 xl:gap-y-8">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-x-8 xl:gap-x-14 gap-y-5">
         {/* Left Column */}
         <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-1.5">
@@ -123,7 +132,7 @@ const PersonalDetailsForm = ({ onSave, onProgressUpdate, initialData }) => {
             />
           </div>
 
-          <div className="flex gap-4">
+          <div className="flex flex-col sm:flex-row gap-4">
             <div className="flex flex-col gap-1.5 flex-grow">
               <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Phone Number</label>
               <div className="flex items-center gap-2 px-3 h-10 bg-neutral-50 rounded-lg border border-neutral-100 focus-within:border-brand-gold-300 transition-colors">
@@ -142,7 +151,7 @@ const PersonalDetailsForm = ({ onSave, onProgressUpdate, initialData }) => {
               </div>
             </div>
 
-            <div className="flex flex-col gap-1.5 w-[180px]">
+            <div className="flex flex-col gap-1.5 sm:w-[160px]">
               <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Date of Birth</label>
               <div className="relative group h-10 cursor-pointer" onClick={triggerDatePicker}>
                 <input
@@ -168,14 +177,20 @@ const PersonalDetailsForm = ({ onSave, onProgressUpdate, initialData }) => {
         <div className="flex flex-col gap-5">
           <div className="flex flex-col gap-1.5">
             <label className="text-[10px] font-bold text-neutral-500 uppercase tracking-wider">Ghana Card Number</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               name="ghanaCardNumber"
               value={formData.ghanaCardNumber}
               onChange={handleInputChange}
-              placeholder="GHA-XXXXXXXXXXXXX-X" 
-              className="w-full h-10 px-4 bg-white rounded-lg border border-neutral-200 outline-none text-sm placeholder:text-neutral-300 focus:border-brand-gold-300 transition-colors"
+              placeholder="GHA-XXXXXXXXX-X"
+              maxLength={16}
+              className={`w-full h-10 px-4 bg-white rounded-lg border outline-none text-sm placeholder:text-neutral-300 transition-colors ${
+                ghanaCardError ? 'border-red-300 focus:border-red-400 bg-red-50/30' : 'border-neutral-200 focus:border-brand-gold-300'
+              }`}
             />
+            {ghanaCardError && (
+              <p className="text-[11px] text-red-500 font-medium">{ghanaCardError}</p>
+            )}
           </div>
 
           <div className="flex flex-col gap-1.5">
@@ -245,12 +260,12 @@ const PersonalDetailsForm = ({ onSave, onProgressUpdate, initialData }) => {
         </div>
 
         <div className="flex justify-end pt-2 mb-4">
-          <button 
+          <button
             onClick={() => onSave(formData)}
-            disabled={!formData.agreed || currentProgress < 100}
+            disabled={!formData.agreed || currentProgress < 100 || !!ghanaCardError}
             className={`px-8 py-2.5 rounded-lg text-sm font-bold transition-all shadow-sm active:scale-95 ${
-              formData.agreed && currentProgress === 100
-                ? 'bg-brand-gold-500 hover:bg-brand-gold-600 text-brand-navy-800' 
+              formData.agreed && currentProgress === 100 && !ghanaCardError
+                ? 'bg-brand-gold-500 hover:bg-brand-gold-600 text-brand-navy-800'
                 : 'bg-neutral-100 text-neutral-400 cursor-not-allowed shadow-none'
             }`}
           >
