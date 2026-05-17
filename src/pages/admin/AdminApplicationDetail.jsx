@@ -65,6 +65,13 @@ const AdminApplicationDetail = () => {
     }
   };
 
+  const sendStatusEmail = async (status, reason = null) => {
+    const { error } = await supabase.functions.invoke('send-status-email', {
+      body: { applicationId: id, status, rejectionReason: reason },
+    });
+    if (error) throw error;
+  };
+
   const handleApprove = async () => {
     setReviewStatus('approving');
     try {
@@ -77,6 +84,9 @@ const AdminApplicationDetail = () => {
       await supabase
         .from('application_status_history')
         .insert([{ application_id: id, status: 'Approved', changed_by: user?.id }]);
+
+      sendStatusEmail('Approved').catch(e => console.error('Approval email failed:', e));
+
       alert('Application Approved Successfully');
       navigate('/admin/applications');
     } catch (error) {
@@ -102,6 +112,9 @@ const AdminApplicationDetail = () => {
       await supabase
         .from('application_status_history')
         .insert([{ application_id: id, status: 'Rejected', changed_by: user?.id, notes: rejectionReason }]);
+
+      sendStatusEmail('Rejected', rejectionReason).catch(e => console.error('Rejection email failed:', e));
+
       alert('Application Rejected');
       navigate('/admin/applications');
     } catch (error) {

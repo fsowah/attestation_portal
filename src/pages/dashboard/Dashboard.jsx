@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import NewApplicationSteps from './components/NewApplicationSteps';
 import ApplicationDetailsModal from './components/ApplicationDetailsModal';
-import { HelpCircle, User, ChevronDown, FileText, Receipt, Navigation, Eye, Inbox, LogOut, Loader2 } from 'lucide-react';
+import { HelpCircle, User, ChevronDown, FileText, Receipt, Navigation, Eye, Inbox, LogOut, Loader2, Menu, X } from 'lucide-react';
 import LogoCrest from '../../assets/images/Logo_crest.png';
 import Adinkra1 from '../../assets/images/adinkra_1.svg';
 import Adinkra2 from '../../assets/images/adinkra_2.svg';
@@ -14,6 +14,7 @@ const Dashboard = () => {
   const { user, profile, signOut } = useAuth();
   const [activeTab, setActiveTab] = useState('applications'); // 'applications', 'invoices', 'track'
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState(null);
   
@@ -91,8 +92,10 @@ const Dashboard = () => {
       </div>
 
       {/* Global Navigation Header */}
-      <header className="relative z-20 bg-[#0a1628] shadow-lg">
-        <div className="max-w-[1440px] mx-auto px-6 lg:px-10 xl:px-16 2xl:px-20 py-2.5 lg:py-3 flex flex-col lg:flex-row items-center justify-between gap-4">
+      <header className="relative z-30 shadow-lg" style={{ background: 'linear-gradient(180deg, #0D1F36 6.51%, #0C4FA5 114.68%)' }}>
+        <div className="max-w-[1440px] mx-auto px-5 lg:px-10 xl:px-16 2xl:px-20 py-2.5 lg:py-3 flex flex-row items-center justify-between gap-4">
+
+          {/* Logo */}
           <div className="flex items-center gap-3">
             <div className="h-10 w-12 lg:h-12 lg:w-14 shrink-0">
               <img src={LogoCrest} alt="MFA Logo" className="w-full h-full object-contain" />
@@ -103,22 +106,24 @@ const Dashboard = () => {
             </div>
           </div>
 
-          <nav className="flex items-center gap-1 lg:gap-8">
-            <button onClick={() => setActiveTab('applications')} className={`flex items-center gap-2 px-3 py-1.5 lg:py-3.5 border-t-2 transition-all duration-300 ${activeTab === 'applications' ? 'border-brand-gold-500 text-white' : 'border-transparent text-white/70 hover:text-white'}`}>
+          {/* Desktop nav — hidden on mobile */}
+          <nav className="hidden lg:flex items-center gap-1 lg:gap-8">
+            <button onClick={() => setActiveTab('applications')} className={`flex items-center gap-2 px-3 py-3.5 border-t-2 transition-all duration-300 ${activeTab === 'applications' ? 'border-brand-gold-500 text-white' : 'border-transparent text-white/70 hover:text-white'}`}>
               <FileText className="w-4 h-4 text-white" />
-              <span className="font-medium text-sm lg:text-[15px]">Applications</span>
+              <span className="font-medium text-[15px]">Applications</span>
             </button>
-            <button onClick={() => setActiveTab('invoices')} className={`flex items-center gap-2 px-3 py-1.5 lg:py-3.5 border-t-2 transition-all duration-300 ${activeTab === 'invoices' ? 'border-brand-gold-500 text-white' : 'border-transparent text-white/70 hover:text-white'}`}>
+            <button onClick={() => setActiveTab('invoices')} className={`flex items-center gap-2 px-3 py-3.5 border-t-2 transition-all duration-300 ${activeTab === 'invoices' ? 'border-brand-gold-500 text-white' : 'border-transparent text-white/70 hover:text-white'}`}>
               <Receipt className="w-4 h-4 text-white" />
-              <span className="font-medium text-sm lg:text-[15px]">Invoices</span>
+              <span className="font-medium text-[15px]">Invoices</span>
             </button>
-            <button onClick={() => setActiveTab('track')} className={`flex items-center gap-2 px-3 py-1.5 lg:py-3.5 border-t-2 transition-all duration-300 ${activeTab === 'track' ? 'border-brand-gold-500 text-white' : 'border-transparent text-white/70 hover:text-white'}`}>
+            <button onClick={() => setActiveTab('track')} className={`flex items-center gap-2 px-3 py-3.5 border-t-2 transition-all duration-300 ${activeTab === 'track' ? 'border-brand-gold-500 text-white' : 'border-transparent text-white/70 hover:text-white'}`}>
               <Navigation className="w-4 h-4 text-white" />
-              <span className="font-medium text-sm lg:text-[15px]">Track status</span>
+              <span className="font-medium text-[15px]">Track status</span>
             </button>
           </nav>
 
-          <div className="flex items-center gap-5">
+          {/* Right: help (desktop) + profile + hamburger (mobile) */}
+          <div className="flex items-center gap-3 lg:gap-5">
             <div className="hidden xl:flex items-center gap-1.5 cursor-pointer group">
               <div className="w-5 h-5 rounded-full bg-white/10 border border-white/20 flex items-center justify-center group-hover:bg-white/20 transition-colors">
                 <HelpCircle className="w-4 h-4 text-white" />
@@ -126,7 +131,7 @@ const Dashboard = () => {
               <span className="text-white font-medium text-xs">Help</span>
             </div>
 
-            <div className="relative" onMouseEnter={() => setIsProfileOpen(true)} onMouseLeave={() => setIsProfileOpen(false)}>
+            <div className="hidden lg:block relative" onMouseEnter={() => setIsProfileOpen(true)} onMouseLeave={() => setIsProfileOpen(false)}>
               <button className="flex items-center gap-2.5 px-3 py-1.5 bg-white/10 border border-white/20 rounded-full hover:bg-white/10 transition-all">
                 <div className="w-5 h-5 rounded-full flex items-center justify-center overflow-hidden">
                   <User className="w-5 h-5 text-white" />
@@ -145,7 +150,7 @@ const Dashboard = () => {
                     My Profile
                   </button>
                   <div className="h-px bg-neutral-100 my-1" />
-                  <button 
+                  <button
                     onClick={handleSignOut}
                     className="w-full px-3 py-2 text-left text-xs text-red-600 font-semibold hover:bg-red-50 transition-colors flex items-center gap-2"
                   >
@@ -155,23 +160,102 @@ const Dashboard = () => {
                 </div>
               )}
             </div>
+
+            {/* Hamburger — mobile only */}
+            <button
+              onClick={() => setIsMobileMenuOpen(prev => !prev)}
+              className="lg:hidden flex items-center justify-center w-9 h-9 rounded-lg bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-colors"
+              aria-label="Toggle menu"
+            >
+              {isMobileMenuOpen ? <X className="w-4 h-4" /> : <Menu className="w-4 h-4" />}
+            </button>
           </div>
         </div>
+
+        {/* Ghana flag stripe */}
         <div className="h-[2px] w-full flex">
           <div className="flex-1 bg-[#ce1126]" />
           <div className="flex-1 bg-[#fcd116]" />
           <div className="flex-1 bg-[#005733]" />
         </div>
+
+        {/* Mobile dropdown drawer */}
+        {isMobileMenuOpen && (
+          <div
+            className="lg:hidden absolute top-full left-0 w-full animate-slide-down shadow-2xl overflow-hidden flex flex-col"
+            style={{
+              height: '45vh',
+              background: 'linear-gradient(180deg, #0D1F36 6.51%, #0C4FA5 114.68%)',
+              borderBottomLeftRadius: '20px',
+              borderBottomRightRadius: '20px',
+            }}
+          >
+            {/* Profile section */}
+            <div className="flex items-center gap-3 px-6 pt-5 pb-4 border-b border-white/10">
+              <div className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center shrink-0">
+                <User className="w-5 h-5 text-white" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-white font-semibold text-sm leading-tight">{profile?.full_name || 'My Account'}</p>
+                <p className="text-white/50 text-xs mt-0.5 truncate">{user?.email}</p>
+              </div>
+            </div>
+
+            {/* Nav items */}
+            <nav className="flex flex-col px-4 pt-3 gap-1 flex-grow">
+              {[
+                { id: 'applications', label: 'Applications', icon: FileText },
+                { id: 'invoices',     label: 'Invoices',     icon: Receipt },
+                { id: 'track',        label: 'Track Status', icon: Navigation },
+              ].map(({ id, label, icon: Icon }) => {
+                const active = activeTab === id;
+                return (
+                  <button
+                    key={id}
+                    onClick={() => { setActiveTab(id); setIsMobileMenuOpen(false); }}
+                    className={`flex items-center gap-4 w-full px-4 py-3.5 rounded-xl text-left transition-all duration-200 ${
+                      active
+                        ? 'bg-white/15 border-l-[3px] border-brand-gold-500 text-brand-gold-500 font-semibold'
+                        : 'border-l-[3px] border-transparent text-white/60 hover:text-white hover:bg-white/8'
+                    }`}
+                  >
+                    <Icon className={`w-5 h-5 shrink-0 ${active ? 'text-brand-gold-500' : 'text-white/50'}`} />
+                    <span className="text-[15px]">{label}</span>
+                  </button>
+                );
+              })}
+            </nav>
+
+            {/* Sign out */}
+            <div className="px-4 pb-5 pt-3 border-t border-white/10">
+              <button
+                onClick={handleSignOut}
+                className="flex items-center gap-3 px-4 py-3 text-white/50 hover:text-red-400 transition-colors text-sm rounded-xl hover:bg-white/5 w-full"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>Sign Out</span>
+              </button>
+            </div>
+          </div>
+        )}
       </header>
 
+      {/* Backdrop to close mobile menu */}
+      {isMobileMenuOpen && (
+        <div
+          className="fixed inset-0 z-20 lg:hidden"
+          onClick={() => setIsMobileMenuOpen(false)}
+        />
+      )}
+
       {/* Main Content Area */}
-      <main className="relative z-10 flex-grow max-w-[1440px] mx-auto w-full px-6 lg:px-10 xl:px-16 2xl:px-20 py-4 lg:py-6 xl:py-8 overflow-hidden">
-        {!isCreatingNew && (
+      <main className="relative z-10 flex-grow max-w-[1440px] mx-auto w-full px-4 md:px-6 lg:px-10 xl:px-16 2xl:px-20 py-4 lg:py-6 xl:py-8 overflow-hidden">
+        {!isCreatingNew && activeTab === 'applications' && (
           <div className="flex items-center justify-between mb-4 xl:mb-6 animate-fade-in-up">
             <h2 className="text-brand-navy-800 text-[20px] lg:text-[24px] xl:text-[28px] font-bold tracking-tight">Applications</h2>
             <button
               onClick={() => setIsCreatingNew(true)}
-              className="hidden sm:flex items-center gap-2 bg-[#fcd116] hover:bg-[#e3bc14] text-[#0a1628] px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-sm active:scale-95"
+              className="flex items-center gap-2 bg-[#fcd116] hover:bg-[#e3bc14] text-[#0a1628] px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-sm active:scale-95"
             >
               <img src={FilesIcon} className="w-4 h-4" alt="" />
               <span>New application</span>
@@ -194,54 +278,116 @@ const Dashboard = () => {
                   <p className="mt-4 text-neutral-400 font-medium">Loading your applications...</p>
                 </div>
               ) : applications.length > 0 ? (
-                <div className="bg-white rounded-[20px] shadow-[0px_4px_12px_0px_rgba(0,0,0,0.06)] overflow-hidden animate-fade-in-up">
-                  {/* Table Header Row */}
-                  <div className="bg-brand-navy-700 px-6 py-3 flex items-center text-white uppercase text-[11px] font-semibold tracking-wider">
-                    <div className="w-[20%]">Application Number</div>
-                    <div className="w-[20%]">Document Type</div>
-                    <div className="w-[20%]">Submitted Date</div>
-                    <div className="w-[15%] text-center">Status</div>
-                    <div className="w-[15%]">Appointment</div>
-                    <div className="w-[10%] text-right pr-4">Action</div>
+                <>
+                  {/* Desktop table — hidden on mobile */}
+                  <div className="hidden md:block bg-white rounded-[20px] shadow-[0px_4px_12px_0px_rgba(0,0,0,0.06)] overflow-hidden animate-fade-in-up">
+                    {/* Table Header Row */}
+                    <div className="bg-brand-navy-700 px-6 py-3 flex items-center text-white uppercase text-[11px] font-semibold tracking-wider">
+                      <div className="w-[20%]">Application Number</div>
+                      <div className="w-[20%]">Document Type</div>
+                      <div className="w-[20%]">Submitted Date</div>
+                      <div className="w-[15%] text-center">Status</div>
+                      <div className="w-[15%]">Appointment</div>
+                      <div className="w-[10%] text-right pr-4">Action</div>
+                    </div>
+
+                    {/* Table Body Rows */}
+                    <div className="flex flex-col">
+                      {applications.map((app, index) => (
+                        <div key={index} className="px-6 py-3.5 flex items-center border-b border-neutral-50 hover:bg-neutral-50/50 transition-colors last:border-0">
+                          <div className="w-[20%] font-semibold text-neutral-600 text-[13px]">{app.id}</div>
+                          <div className="w-[20%] text-neutral-500 text-[13px]">{app.document_type}</div>
+                          <div className="w-[20%] text-neutral-500 text-[13px]">
+                            {app.submitted_at ? new Date(app.submitted_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
+                          </div>
+                          <div className="w-[15%] flex justify-center">
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase ${getStatusStyle(app.status)}`}>
+                              {app.status}
+                            </span>
+                          </div>
+                          <div className="w-[15%] text-neutral-500 text-[12px] leading-relaxed pr-4">
+                            {app.appointment_details ? (
+                              <div className="flex flex-col">
+                                <span className="font-bold text-neutral-700">{app.appointment_details.date}</span>
+                                <span className="text-[11px] opacity-70">{app.appointment_details.time}</span>
+                              </div>
+                            ) : (
+                              <span className="italic opacity-40">No appointment</span>
+                            )}
+                          </div>
+                          <div className="w-[10%] flex justify-end items-center pr-4">
+                            <button
+                              onClick={() => setSelectedApplication(app)}
+                              className="flex items-center gap-2 text-brand-navy-800 hover:text-black font-bold text-[13px] group"
+                            >
+                              <Eye className="w-3.5 h-3.5 opacity-80 group-hover:opacity-100 transition-opacity" />
+                              <span>View</span>
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
 
-                  {/* Table Body Rows */}
-                  <div className="flex flex-col">
+                  {/* Mobile cards — hidden on md+ */}
+                  <div className="md:hidden flex flex-col gap-3 animate-fade-in-up">
                     {applications.map((app, index) => (
-                      <div key={index} className="px-6 py-3.5 flex items-center border-b border-neutral-50 hover:bg-neutral-50/50 transition-colors last:border-0">
-                        <div className="w-[20%] font-semibold text-neutral-600 text-[13px]">{app.id}</div>
-                        <div className="w-[20%] text-neutral-500 text-[13px]">{app.document_type}</div>
-                        <div className="w-[20%] text-neutral-500 text-[13px]">
-                          {app.submitted_at ? new Date(app.submitted_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
-                        </div>
-                        <div className="w-[15%] flex justify-center">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase ${getStatusStyle(app.status)}`}>
+                      <div key={index} className="bg-white rounded-2xl border border-neutral-100 shadow-sm overflow-hidden">
+
+                        {/* Card top: ID + status */}
+                        <div className="px-4 pt-4 pb-2 flex items-center justify-between gap-2">
+                          <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest truncate">{app.id}</span>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase shrink-0 ${getStatusStyle(app.status)}`}>
                             {app.status}
                           </span>
                         </div>
-                        <div className="w-[15%] text-neutral-500 text-[12px] leading-relaxed pr-4">
-                          {app.appointment_details ? (
-                            <div className="flex flex-col">
-                              <span className="font-bold text-neutral-700">{app.appointment_details.date}</span>
-                              <span className="text-[11px] opacity-70">{app.appointment_details.time}</span>
-                            </div>
-                          ) : (
-                            <span className="italic opacity-40">No appointment</span>
-                          )}
+
+                        {/* Document type */}
+                        <div className="px-4 pb-3">
+                          <h3 className="text-[16px] font-bold text-brand-navy-800 leading-snug">{app.document_type}</h3>
                         </div>
-                        <div className="w-[10%] flex justify-end items-center pr-4">
+
+                        {/* Divider */}
+                        <div className="h-px bg-neutral-100 mx-4" />
+
+                        {/* Detail rows */}
+                        <div className="px-4 py-3 flex flex-col gap-2.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[12px] text-neutral-400 font-medium">Submitted</span>
+                            <span className="text-[12px] font-semibold text-neutral-700">
+                              {app.submitted_at
+                                ? new Date(app.submitted_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
+                                : 'N/A'}
+                            </span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-[12px] text-neutral-400 font-medium">Appointment</span>
+                            {app.appointment_details ? (
+                              <span className="text-[12px] font-semibold text-neutral-700">
+                                {app.appointment_details.date}
+                                {app.appointment_details.time ? ` · ${app.appointment_details.time}` : ''}
+                              </span>
+                            ) : (
+                              <span className="text-[12px] text-neutral-300 italic">Not scheduled</span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* View button */}
+                        <div className="px-4 pb-4 pt-1">
                           <button
                             onClick={() => setSelectedApplication(app)}
-                            className="flex items-center gap-2 text-brand-navy-800 hover:text-black font-bold text-[13px] group"
+                            className="w-full flex items-center justify-center gap-2 py-2.5 bg-brand-navy-800 hover:bg-black text-white rounded-xl text-[13px] font-bold transition-all active:scale-95"
                           >
-                            <Eye className="w-3.5 h-3.5 opacity-80 group-hover:opacity-100 transition-opacity" />
-                            <span>View</span>
+                            <Eye className="w-4 h-4" />
+                            View Application
                           </button>
                         </div>
                       </div>
                     ))}
                   </div>
-                </div>
+                </>
+
               ) : (
                 <div className="flex flex-col items-center justify-center py-10 text-center animate-fade-in-up max-w-[500px] mx-auto">
                   <div className="w-full max-w-[220px] mb-5">
