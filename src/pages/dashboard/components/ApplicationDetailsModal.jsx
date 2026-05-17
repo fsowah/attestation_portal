@@ -245,7 +245,7 @@ const ApplicationDetailsModal = ({ application, onClose }) => {
           </div>
           <button 
             onClick={onClose}
-            className="px-8 py-3 bg-brand-navy-900 text-white rounded-xl text-sm font-bold hover:bg-black transition-all shadow-lg active:scale-95"
+            className="px-8 py-3 bg-white text-black rounded-xl text-sm font-bold transition-all shadow-lg active:scale-95 cursor-pointer"
           >
             Close Details
           </button>
