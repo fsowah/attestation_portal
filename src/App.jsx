@@ -4,6 +4,10 @@ import { AuthProvider } from './context/AuthContext';
 import ProtectedRoute from './components/ProtectedRoute';
 import Login from './pages/login/Login';
 import Dashboard from './pages/dashboard/Dashboard';
+import ApplicationsPage from './pages/dashboard/ApplicationsPage';
+import NewApplicationPage from './pages/dashboard/NewApplicationPage';
+import InvoicesPage from './pages/dashboard/InvoicesPage';
+import TrackStatusPage from './pages/dashboard/TrackStatusPage';
 
 // Admin Pages
 import AdminLayout from './pages/admin/AdminLayout';
@@ -20,20 +24,26 @@ function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login />} />
-            
+
             {/* Applicant Routes */}
-            <Route 
-              path="/dashboard" 
+            <Route
+              path="/dashboard"
               element={
                 <ProtectedRoute allowedRole="user">
                   <Dashboard />
                 </ProtectedRoute>
-              } 
-            />
+              }
+            >
+              <Route index element={<Navigate to="applications" replace />} />
+              <Route path="applications" element={<ApplicationsPage />} />
+              <Route path="new-application" element={<NewApplicationPage />} />
+              <Route path="invoices" element={<InvoicesPage />} />
+              <Route path="track-status" element={<TrackStatusPage />} />
+            </Route>
 
             {/* Admin Routes */}
-            <Route 
-              path="/admin" 
+            <Route
+              path="/admin"
               element={
                 <ProtectedRoute allowedRole="admin">
                   <AdminLayout />
