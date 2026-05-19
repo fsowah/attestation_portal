@@ -9,7 +9,7 @@ import MoFACrest from '../../../assets/images/Logo_crest.png';
 import { supabase } from '../../../supabaseClient';
 import { useAuth } from '../../../context/AuthContext';
 
-const NewApplicationSteps = ({ onBack }) => {
+const NewApplicationSteps = ({ onBack, onTrack }) => {
   const { user } = useAuth();
   const [expandedStep, setExpandedStep] = useState(null); // null, 1, 2, 3, 4
   const [completedSteps, setCompletedSteps] = useState([]); // [1, 2, ...]
@@ -262,7 +262,7 @@ const NewApplicationSteps = ({ onBack }) => {
   ];
 
   if (isSubmitted) {
-    return <ApplicationSubmittedSuccess onGoHome={onBack} onTrack={onBack} application={submittedApplication} />;
+    return <ApplicationSubmittedSuccess onGoHome={onBack} onTrack={onTrack || onBack} application={submittedApplication} />;
   }
 
   return (

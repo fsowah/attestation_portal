@@ -1,74 +1,50 @@
 import React, { useState, useEffect } from 'react';
-import NewApplicationSteps from './components/NewApplicationSteps';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import ApplicationDetailsModal from './components/ApplicationDetailsModal';
-import { HelpCircle, User, ChevronDown, FileText, Receipt, Navigation, Eye, Inbox, LogOut, Loader2, Menu, X } from 'lucide-react';
+import { HelpCircle, User, ChevronDown, FileText, Receipt, Navigation, LogOut, Loader2, Menu, X } from 'lucide-react';
 import LogoCrest from '../../assets/images/Logo_crest.png';
 import Adinkra1 from '../../assets/images/adinkra_1.svg';
 import Adinkra2 from '../../assets/images/adinkra_2.svg';
-import EmptyStateIllustration from '../../assets/images/illustration_fallback.png';
-import FilesIcon from '../../assets/images/files_icon.svg';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../supabaseClient';
 
+const NAV_ITEMS = [
+  { path: '/dashboard/applications', label: 'Applications', icon: FileText },
+  { path: '/dashboard/invoices',     label: 'Invoices',     icon: Receipt },
+  { path: '/dashboard/track-status', label: 'Track status', icon: Navigation },
+];
+
 const Dashboard = () => {
   const { user, profile, signOut } = useAuth();
-  const [activeTab, setActiveTab] = useState('applications'); // 'applications', 'invoices', 'track'
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isCreatingNew, setIsCreatingNew] = useState(false);
   const [selectedApplication, setSelectedApplication] = useState(null);
-  
+
   const [applications, setApplications] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [rlsError, setRlsError] = useState(null);
 
   useEffect(() => {
-    if (user) {
-      fetchApplications();
-    }
+    if (user) fetchApplications();
   }, [user]);
 
   const fetchApplications = async () => {
     setIsLoading(true);
-    setRlsError(null);
     try {
-      console.log('Fetching applications for user:', user.id);
       const { data, error } = await supabase
         .from('applications')
         .select('*')
         .eq('user_id', user.id)
         .order('submitted_at', { ascending: false });
 
-      console.log('Applications fetch result:', { data, error });
-
-      if (error) {
-        setRlsError(`DB Error: ${error.message} (code: ${error.code})`);
-        throw error;
-      }
+      if (error) throw error;
       setApplications(data || []);
-      if (data?.length === 0) {
-        console.log('No applications returned — this could be an RLS issue if you know data exists.');
-      }
     } catch (error) {
       console.error('Error fetching applications:', error);
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const getStatusStyle = (status) => {
-    switch (status) {
-      case 'Submitted':
-        return 'bg-blue-50 text-blue-700 border border-blue-100';
-      case 'Pending review':
-        return 'bg-[#fef6b8] text-[#7a6209] border border-[#f5e6a0]';
-      case 'Approved':
-      case 'Completed':
-        return 'bg-[#e5f4ed] text-[#004728] border border-[#c3e6d5]';
-      case 'Rejected':
-        return 'bg-red-50 text-red-700 border border-red-100';
-      default:
-        return 'bg-neutral-100 text-neutral-600 border border-neutral-200';
     }
   };
 
@@ -77,9 +53,11 @@ const Dashboard = () => {
     window.location.href = '/login';
   };
 
+  const isActive = (path) => location.pathname.startsWith(path);
+
   return (
     <div className="min-h-screen bg-[#fcfbf9] flex flex-col font-inter relative overflow-hidden text-neutral-800">
-      {/* Decorative Background Symbols (Adinkra) */}
+      {/* Decorative Background Symbols */}
       <div className="absolute inset-0 opacity-[0.4] pointer-events-none select-none overflow-hidden z-0">
         <div className="absolute top-[20%] left-[-5%] w-[110%] h-[110%] flex flex-wrap gap-48 rotate-[-5deg]">
           {[...Array(12)].map((_, i) => (
@@ -91,7 +69,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      {/* Global Navigation Header */}
+      {/* Header */}
       <header className="relative z-30 shadow-lg" style={{ background: 'linear-gradient(180deg, #0D1F36 6.51%, #0C4FA5 114.68%)' }}>
         <div className="max-w-[1440px] mx-auto px-5 lg:px-10 xl:px-16 2xl:px-20 py-2.5 lg:py-3 flex flex-row items-center justify-between gap-4">
 
@@ -106,23 +84,21 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* Desktop nav — hidden on mobile */}
+          {/* Desktop nav */}
           <nav className="hidden lg:flex items-center gap-1 lg:gap-8">
-            <button onClick={() => setActiveTab('applications')} className={`flex items-center gap-2 px-3 py-3.5 border-t-2 transition-all duration-300 ${activeTab === 'applications' ? 'border-brand-gold-500 text-white' : 'border-transparent text-white/70 hover:text-white'}`}>
-              <FileText className="w-4 h-4 text-white" />
-              <span className="font-medium text-[15px]">Applications</span>
-            </button>
-            <button onClick={() => setActiveTab('invoices')} className={`flex items-center gap-2 px-3 py-3.5 border-t-2 transition-all duration-300 ${activeTab === 'invoices' ? 'border-brand-gold-500 text-white' : 'border-transparent text-white/70 hover:text-white'}`}>
-              <Receipt className="w-4 h-4 text-white" />
-              <span className="font-medium text-[15px]">Invoices</span>
-            </button>
-            <button onClick={() => setActiveTab('track')} className={`flex items-center gap-2 px-3 py-3.5 border-t-2 transition-all duration-300 ${activeTab === 'track' ? 'border-brand-gold-500 text-white' : 'border-transparent text-white/70 hover:text-white'}`}>
-              <Navigation className="w-4 h-4 text-white" />
-              <span className="font-medium text-[15px]">Track status</span>
-            </button>
+            {NAV_ITEMS.map(({ path, label, icon: Icon }) => (
+              <button
+                key={path}
+                onClick={() => navigate(path)}
+                className={`flex items-center gap-2 px-3 py-3.5 border-t-2 transition-all duration-300 ${isActive(path) ? 'border-brand-gold-500 text-white' : 'border-transparent text-white/70 hover:text-white'}`}
+              >
+                <Icon className="w-4 h-4 text-white" />
+                <span className="font-medium text-[15px]">{label}</span>
+              </button>
+            ))}
           </nav>
 
-          {/* Right: help (desktop) + profile + hamburger (mobile) */}
+          {/* Right: help + profile + hamburger */}
           <div className="flex items-center gap-3 lg:gap-5">
             <div className="hidden xl:flex items-center gap-1.5 cursor-pointer group">
               <div className="w-5 h-5 rounded-full bg-white/10 border border-white/20 flex items-center justify-center group-hover:bg-white/20 transition-colors">
@@ -161,7 +137,7 @@ const Dashboard = () => {
               )}
             </div>
 
-            {/* Hamburger — mobile only */}
+            {/* Hamburger */}
             <button
               onClick={() => setIsMobileMenuOpen(prev => !prev)}
               className="lg:hidden flex items-center justify-center w-9 h-9 rounded-lg bg-white/10 border border-white/20 text-white hover:bg-white/20 transition-colors"
@@ -179,7 +155,7 @@ const Dashboard = () => {
           <div className="flex-1 bg-[#005733]" />
         </div>
 
-        {/* Mobile dropdown drawer */}
+        {/* Mobile drawer */}
         {isMobileMenuOpen && (
           <div
             className="lg:hidden absolute top-full left-0 w-full animate-slide-down shadow-2xl overflow-hidden flex flex-col"
@@ -190,7 +166,6 @@ const Dashboard = () => {
               borderBottomRightRadius: '20px',
             }}
           >
-            {/* Profile section */}
             <div className="flex items-center gap-3 px-6 pt-5 pb-4 border-b border-white/10">
               <div className="w-10 h-10 rounded-full bg-white/10 border border-white/20 flex items-center justify-center shrink-0">
                 <User className="w-5 h-5 text-white" />
@@ -201,18 +176,13 @@ const Dashboard = () => {
               </div>
             </div>
 
-            {/* Nav items */}
             <nav className="flex flex-col px-4 pt-3 gap-1 flex-grow">
-              {[
-                { id: 'applications', label: 'Applications', icon: FileText },
-                { id: 'invoices',     label: 'Invoices',     icon: Receipt },
-                { id: 'track',        label: 'Track Status', icon: Navigation },
-              ].map(({ id, label, icon: Icon }) => {
-                const active = activeTab === id;
+              {NAV_ITEMS.map(({ path, label, icon: Icon }) => {
+                const active = isActive(path);
                 return (
                   <button
-                    key={id}
-                    onClick={() => { setActiveTab(id); setIsMobileMenuOpen(false); }}
+                    key={path}
+                    onClick={() => { navigate(path); setIsMobileMenuOpen(false); }}
                     className={`flex items-center gap-4 w-full px-4 py-3.5 rounded-xl text-left transition-all duration-200 ${
                       active
                         ? 'bg-white/15 border-l-[3px] border-brand-gold-500 text-brand-gold-500 font-semibold'
@@ -226,7 +196,6 @@ const Dashboard = () => {
               })}
             </nav>
 
-            {/* Sign out */}
             <div className="px-4 pb-5 pt-3 border-t border-white/10">
               <button
                 onClick={handleSignOut}
@@ -240,261 +209,14 @@ const Dashboard = () => {
         )}
       </header>
 
-      {/* Backdrop to close mobile menu */}
+      {/* Backdrop */}
       {isMobileMenuOpen && (
-        <div
-          className="fixed inset-0 z-20 lg:hidden"
-          onClick={() => setIsMobileMenuOpen(false)}
-        />
+        <div className="fixed inset-0 z-20 lg:hidden" onClick={() => setIsMobileMenuOpen(false)} />
       )}
 
-      {/* Main Content Area */}
+      {/* Main Content */}
       <main className="relative z-10 flex-grow max-w-[1440px] mx-auto w-full px-4 md:px-6 lg:px-10 xl:px-16 2xl:px-20 py-4 lg:py-6 xl:py-8 overflow-hidden">
-        {!isCreatingNew && activeTab === 'applications' && (
-          <div className="flex items-center justify-between mb-4 xl:mb-6 animate-fade-in-up">
-            <h2 className="text-brand-navy-800 text-[20px] lg:text-[24px] xl:text-[28px] font-bold tracking-tight">Applications</h2>
-            <button
-              onClick={() => setIsCreatingNew(true)}
-              className="flex items-center gap-2 bg-[#fcd116] hover:bg-[#e3bc14] text-[#0a1628] px-4 py-2 rounded-lg text-sm font-bold transition-all shadow-sm active:scale-95"
-            >
-              <img src={FilesIcon} className="w-4 h-4" alt="" />
-              <span>New application</span>
-            </button>
-          </div>
-        )}
-
-        {/* Dynamic Content Views */}
-        <div className="flex-grow">
-          {activeTab === 'applications' && (
-            <>
-              {isCreatingNew ? (
-                <NewApplicationSteps onBack={() => setIsCreatingNew(false)} onTrack={() => {
-                  setIsCreatingNew(false);
-                  setActiveTab('track');
-                }} />
-              ) : isLoading ? (
-                <div className="flex flex-col items-center justify-center py-20">
-                  <Loader2 className="w-10 h-10 text-brand-gold-500 animate-spin" />
-                  <p className="mt-4 text-neutral-400 font-medium">Loading your applications...</p>
-                </div>
-              ) : applications.length > 0 ? (
-                <>
-                  {/* Desktop table — hidden on mobile */}
-                  <div className="hidden md:block bg-white rounded-[20px] shadow-[0px_4px_12px_0px_rgba(0,0,0,0.06)] overflow-hidden animate-fade-in-up">
-                    {/* Table Header Row */}
-                    <div className="bg-brand-navy-700 px-6 py-3 flex items-center text-white uppercase text-[11px] font-semibold tracking-wider">
-                      <div className="w-[20%]">Application Number</div>
-                      <div className="w-[20%]">Document Type</div>
-                      <div className="w-[20%]">Submitted Date</div>
-                      <div className="w-[15%] text-center">Status</div>
-                      <div className="w-[15%]">Appointment</div>
-                      <div className="w-[10%] text-right pr-4">Action</div>
-                    </div>
-
-                    {/* Table Body Rows */}
-                    <div className="flex flex-col">
-                      {applications.map((app, index) => (
-                        <div key={index} className="px-6 py-3.5 flex items-center border-b border-neutral-50 hover:bg-neutral-50/50 transition-colors last:border-0">
-                          <div className="w-[20%] font-semibold text-neutral-600 text-[13px]">{app.id}</div>
-                          <div className="w-[20%] text-neutral-500 text-[13px]">{app.document_type}</div>
-                          <div className="w-[20%] text-neutral-500 text-[13px]">
-                            {app.submitted_at ? new Date(app.submitted_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}
-                          </div>
-                          <div className="w-[15%] flex justify-center">
-                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase ${getStatusStyle(app.status)}`}>
-                              {app.status}
-                            </span>
-                          </div>
-                          <div className="w-[15%] text-neutral-500 text-[12px] leading-relaxed pr-4">
-                            {app.appointment_details ? (
-                              <div className="flex flex-col">
-                                <span className="font-bold text-neutral-700">{app.appointment_details.date}</span>
-                                <span className="text-[11px] opacity-70">{app.appointment_details.time}</span>
-                              </div>
-                            ) : (
-                              <span className="italic opacity-40">No appointment</span>
-                            )}
-                          </div>
-                          <div className="w-[10%] flex justify-end items-center pr-4">
-                            <button
-                              onClick={() => setSelectedApplication(app)}
-                              className="flex items-center gap-2 text-brand-navy-800 hover:text-black font-bold text-[13px] group"
-                            >
-                              <Eye className="w-3.5 h-3.5 opacity-80 group-hover:opacity-100 transition-opacity" />
-                              <span>View</span>
-                            </button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Mobile cards — hidden on md+ */}
-                  <div className="md:hidden flex flex-col gap-3 animate-fade-in-up">
-                    {applications.map((app, index) => (
-                      <div key={index} className="bg-white rounded-2xl border border-neutral-100 shadow-sm overflow-hidden">
-
-                        {/* Card top: ID + status */}
-                        <div className="px-4 pt-4 pb-2 flex items-center justify-between gap-2">
-                          <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-widest truncate">{app.id}</span>
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase shrink-0 ${getStatusStyle(app.status)}`}>
-                            {app.status}
-                          </span>
-                        </div>
-
-                        {/* Document type */}
-                        <div className="px-4 pb-3">
-                          <h3 className="text-[16px] font-bold text-brand-navy-800 leading-snug">{app.document_type}</h3>
-                        </div>
-
-                        {/* Divider */}
-                        <div className="h-px bg-neutral-100 mx-4" />
-
-                        {/* Detail rows */}
-                        <div className="px-4 py-3 flex flex-col gap-2.5">
-                          <div className="flex items-center justify-between">
-                            <span className="text-[12px] text-neutral-400 font-medium">Submitted</span>
-                            <span className="text-[12px] font-semibold text-neutral-700">
-                              {app.submitted_at
-                                ? new Date(app.submitted_at).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })
-                                : 'N/A'}
-                            </span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span className="text-[12px] text-neutral-400 font-medium">Appointment</span>
-                            {app.appointment_details ? (
-                              <span className="text-[12px] font-semibold text-neutral-700">
-                                {app.appointment_details.date}
-                                {app.appointment_details.time ? ` · ${app.appointment_details.time}` : ''}
-                              </span>
-                            ) : (
-                              <span className="text-[12px] text-neutral-300 italic">Not scheduled</span>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* View button */}
-                        <div className="px-4 pb-4 pt-1">
-                          <button
-                            onClick={() => setSelectedApplication(app)}
-                            className="w-full flex items-center justify-center gap-2 py-2.5 bg-brand-navy-800 hover:bg-black text-white rounded-xl text-[13px] font-bold transition-all active:scale-95"
-                          >
-                            <Eye className="w-4 h-4" />
-                            View Application
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </>
-
-              ) : (
-                <div className="flex flex-col items-center justify-center py-10 text-center animate-fade-in-up max-w-[500px] mx-auto">
-                  <div className="w-full max-w-[220px] mb-5">
-                    <img
-                      src={EmptyStateIllustration}
-                      alt="No applications"
-                      className="w-full h-auto drop-shadow-sm"
-                    />
-                  </div>
-                  <div className="flex flex-col gap-1.5 mb-7">
-                    <h3 className="text-[#0a1628] text-[20px] font-bold tracking-tight">No applications yet</h3>
-                    <p className="text-[#908e8a] text-sm leading-relaxed">
-                      Start your first attestation request. It takes less than 10 minutes to submit your documents online.
-                    </p>
-                  </div>
-                  <button
-                    onClick={() => setIsCreatingNew(true)}
-                    className="flex items-center gap-2 bg-[#f9f8f7] hover:bg-neutral-100 text-[#081524] px-8 py-2.5 rounded-lg text-[13px] font-semibold transition-all shadow-sm border border-neutral-100"
-                  >
-                    <img src={FilesIcon} className="w-4 h-4" alt="" />
-                    <span>New application</span>
-                  </button>
-                </div>
-              )}
-            </>
-          )}
-
-          {activeTab === 'track' && (
-            <div className="animate-fade-in-up">
-              <h2 className="text-brand-navy-800 text-[20px] lg:text-[24px] xl:text-[28px] font-bold tracking-tight mb-4 xl:mb-6">Track Status</h2>
-              {applications.length > 0 ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {applications.map((app, index) => (
-                    <div key={index} className="bg-white rounded-xl border border-neutral-100 p-4 shadow-sm hover:shadow-md transition-all">
-                      <div className="flex items-center justify-between mb-3">
-                        <span className="text-[11px] font-bold text-neutral-400 uppercase tracking-wider">{app.id}</span>
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase ${getStatusStyle(app.status)}`}>
-                          {app.status}
-                        </span>
-                      </div>
-                      <h3 className="text-[14px] font-bold text-brand-navy-800 mb-1">{app.document_type}</h3>
-                      <div className="space-y-2 mt-3 pt-3 border-t border-neutral-50">
-                        <div className="flex justify-between text-xs">
-                          <span className="text-neutral-400">Submitted</span>
-                          <span className="font-semibold text-neutral-600">{new Date(app.submitted_at).toLocaleDateString()}</span>
-                        </div>
-                        <div className="flex justify-between text-xs">
-                          <span className="text-neutral-400">Appointment</span>
-                          <span className="font-semibold text-neutral-600">{app.appointment_details?.date || 'N/A'}</span>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => setSelectedApplication(app)}
-                        className="w-full mt-4 py-2 bg-neutral-50 hover:bg-neutral-100 text-brand-navy-800 rounded-lg text-xs font-bold transition-all"
-                      >
-                        Detailed Status
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-12 bg-white rounded-2xl border border-neutral-100">
-                  <p className="text-neutral-400 font-medium">No applications to track yet.</p>
-                </div>
-              )}
-            </div>
-          )}
-
-          {activeTab === 'invoices' && (
-            <div className="animate-fade-in-up">
-              <h2 className="text-brand-navy-800 text-[20px] lg:text-[24px] xl:text-[28px] font-bold tracking-tight mb-4 xl:mb-6">Invoices</h2>
-              {applications.length > 0 ? (
-                <div className="bg-white rounded-xl border border-neutral-100 shadow-sm overflow-hidden">
-                  <div className="bg-neutral-50 px-6 py-3 flex items-center text-neutral-400 uppercase text-[11px] font-bold tracking-wider border-b border-neutral-100">
-                    <div className="w-[25%]">Invoice ID</div>
-                    <div className="w-[30%]">Application</div>
-                    <div className="w-[20%]">Date</div>
-                    <div className="w-[15%]">Type</div>
-                    <div className="w-[10%] text-right">Amount</div>
-                  </div>
-                  <div className="flex flex-col divide-y divide-neutral-50">
-                    {applications.map((app, index) => {
-                      const amount = app.service_tier?.toLowerCase().includes('express') ? 450 : 200;
-                      return (
-                        <div key={index} className="px-6 py-3.5 flex items-center hover:bg-neutral-50/30 transition-colors">
-                          <div className="w-[25%] font-bold text-brand-navy-800 text-[13px]">INV-{app.id.split('-')[2]}</div>
-                          <div className="w-[30%] text-neutral-500 text-[13px]">{app.document_type}</div>
-                          <div className="w-[20%] text-neutral-500 text-[13px]">{new Date(app.submitted_at).toLocaleDateString()}</div>
-                          <div className="w-[15%]">
-                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded-lg uppercase tracking-wide ${app.service_tier?.toLowerCase().includes('express') ? 'bg-amber-50 text-amber-600' : 'bg-blue-50 text-blue-600'}`}>
-                              {app.service_tier || 'Standard'}
-                            </span>
-                          </div>
-                          <div className="w-[10%] text-right font-black text-brand-navy-800 text-[13px]">GHS {amount}</div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-12 bg-white rounded-2xl border border-neutral-100">
-                  <p className="text-neutral-400 font-medium">No invoices found.</p>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
+        <Outlet context={{ applications, isLoading, fetchApplications, setSelectedApplication }} />
       </main>
 
       <footer className="relative z-10 py-4 flex flex-col items-center gap-0.5 text-[#9e9c99] text-[11px] font-normal border-t border-neutral-100/50 bg-white/30 animate-slow-fade-in">
@@ -502,11 +224,10 @@ const Dashboard = () => {
         <p>© 2026 Ministry of Foreign Affairs, Ghana</p>
       </footer>
 
-      {/* Details Modal */}
       {selectedApplication && (
-        <ApplicationDetailsModal 
-          application={selectedApplication} 
-          onClose={() => setSelectedApplication(null)} 
+        <ApplicationDetailsModal
+          application={selectedApplication}
+          onClose={() => setSelectedApplication(null)}
         />
       )}
     </div>
