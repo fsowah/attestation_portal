@@ -15,6 +15,7 @@ import AdminDashboard from './pages/admin/AdminDashboard';
 import AdminApplications from './pages/admin/AdminApplications';
 import AdminApplicationDetail from './pages/admin/AdminApplicationDetail';
 import AdminAppointments from './pages/admin/AdminAppointments';
+import AdminUsers from './pages/admin/AdminUsers';
 
 function App() {
   return (
@@ -54,6 +55,7 @@ function App() {
               <Route path="applications" element={<AdminApplications />} />
               <Route path="applications/:id" element={<AdminApplicationDetail />} />
               <Route path="appointments" element={<AdminAppointments />} />
+              <Route path="users" element={<AdminUsers />} />
               <Route path="settings" element={<div className="p-8">Settings Screen Coming Soon</div>} />
             </Route>
 

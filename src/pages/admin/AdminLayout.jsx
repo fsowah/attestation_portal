@@ -5,6 +5,7 @@ import {
   FileText,
   Calendar,
   Settings,
+  Users,
   LogOut,
   Bell,
   Search,
@@ -16,7 +17,7 @@ import { useAuth } from '../../context/AuthContext';
 import LogoCrest from '../../assets/images/Logo_crest.png';
 
 const AdminLayout = () => {
-  const { profile, signOut } = useAuth();
+  const { user, profile, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -30,6 +31,7 @@ const AdminLayout = () => {
     { name: 'Dashboard',     path: '/admin',              icon: LayoutDashboard },
     { name: 'Applications',  path: '/admin/applications', icon: FileText },
     { name: 'Appointments',  path: '/admin/appointments', icon: Calendar },
+    { name: 'Users',         path: '/admin/users',        icon: Users },
     { name: 'Settings',      path: '/admin/settings',     icon: Settings },
   ];
 
@@ -130,7 +132,7 @@ const AdminLayout = () => {
             <div className="flex items-center gap-2.5 pl-3 border-l border-neutral-100">
               <div className="hidden sm:flex flex-col text-right">
                 <span className="text-xs font-bold text-brand-navy-800 leading-tight">Administrator</span>
-                <span className="text-[10px] text-neutral-400 font-medium truncate max-w-[120px]">{profile?.email || 'Admin'}</span>
+                <span className="text-[10px] text-neutral-400 font-medium truncate max-w-[120px]">{user?.email || 'Admin'}</span>
               </div>
               <div className="w-8 h-8 bg-brand-gold-100 rounded-full flex items-center justify-center text-brand-gold-600 font-bold border border-brand-gold-200 shadow-sm shrink-0">
                 <User className="w-4 h-4" />

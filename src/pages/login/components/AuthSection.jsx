@@ -56,6 +56,12 @@ const AuthSection = () => {
       if (signUpError) throw signUpError;
 
       if (data.user) {
+        await supabase.from('profiles').upsert({
+          id: data.user.id,
+          full_name: fullName,
+          role: 'user',
+        }, { onConflict: 'id' });
+
         navigate('/dashboard');
       }
     } catch (err) {
