@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import 'react-phone-number-input/style.css';
 import PhoneInput from 'react-phone-number-input';
+import { AlertCircle, Loader2 } from 'lucide-react';
 
-const ForgotPasswordSection = ({ onBack, onSendCode }) => {
+const ForgotPasswordSection = ({ onBack, onSendCode, isLoading, error }) => {
   const [phoneNumber, setPhoneNumber] = useState('');
 
   return (
@@ -26,6 +27,13 @@ const ForgotPasswordSection = ({ onBack, onSendCode }) => {
           </p>
         </div>
 
+        {error && (
+          <div className="mb-6 w-full p-4 bg-red-50 border border-red-100 rounded-xl flex items-center gap-3 text-red-600 animate-shake">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <p className="text-xs font-bold leading-tight">{error}</p>
+          </div>
+        )}
+
         {/* Form Fields */}
         <div className="space-y-4 mb-6">
           <div className="space-y-1.5">
@@ -44,9 +52,10 @@ const ForgotPasswordSection = ({ onBack, onSendCode }) => {
 
         <button 
           onClick={() => onSendCode(phoneNumber)}
-          className="w-full h-10 bg-brand-gold-500 hover:bg-brand-gold-700 text-brand-navy-700 font-bold text-sm rounded-lg transition-all shadow-sm mb-4"
+          disabled={isLoading || !phoneNumber}
+          className="w-full h-10 bg-brand-gold-500 hover:bg-brand-gold-700 text-brand-navy-700 font-bold text-sm rounded-lg transition-all shadow-sm mb-4 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
         >
-          Send reset code
+          {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Send reset code'}
         </button>
 
         <div className="w-full h-px bg-neutral-100 mb-6" />

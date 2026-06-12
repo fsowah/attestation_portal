@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { AlertCircle, CheckSquare, Square } from 'lucide-react';
+import { AlertCircle, CheckSquare, Square, Loader2 } from 'lucide-react';
 
-const SetPasswordSection = ({ onComplete }) => {
+const SetPasswordSection = ({ onComplete, isLoading, error }) => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -41,6 +41,13 @@ const SetPasswordSection = ({ onComplete }) => {
             Your new password must be at least 8 characters and include a number.
           </p>
         </div>
+
+        {error && (
+          <div className="mb-6 w-full p-4 bg-red-50 border border-red-100 rounded-xl flex items-center gap-3 text-red-600 animate-shake">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <p className="text-xs font-bold leading-tight">{error}</p>
+          </div>
+        )}
 
         <div className="space-y-4 mb-6">
           {/* New Password Field */}
@@ -134,15 +141,15 @@ const SetPasswordSection = ({ onComplete }) => {
         </div>
 
         <button 
-          onClick={onComplete}
-          disabled={!isFormValid}
-          className={`w-full h-10 font-bold text-sm rounded-lg transition-all shadow-sm mb-6 ${
+          onClick={() => onComplete(password)}
+          disabled={!isFormValid || isLoading}
+          className={`w-full h-10 font-bold text-sm rounded-lg transition-all shadow-sm mb-6 flex items-center justify-center gap-2 ${
             isFormValid 
               ? 'bg-brand-gold-500 hover:bg-brand-gold-700 text-brand-navy-700' 
               : 'bg-neutral-100 text-neutral-400 cursor-not-allowed'
-          }`}
+          } disabled:opacity-70`}
         >
-          Set new password
+          {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Set new password'}
         </button>
       </div>
 

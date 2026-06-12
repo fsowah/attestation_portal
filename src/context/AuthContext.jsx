@@ -39,37 +39,39 @@ export const AuthProvider = ({ children }) => {
 
   const fetchProfile = async (userId, email) => {
     try {
-      // Add a small timeout to avoid hanging if RLS policies are misconfigured (recursion)
       const fetchPromise = supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
 
-      const timeoutPromise = new Promise((_, reject) => 
+      const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error('Profile fetch timeout')), 5000)
       );
 
       const { data, error } = await Promise.race([fetchPromise, timeoutPromise]);
 
-      if (error && error.code !== 'PGRST116') {
+      // No profile row yet — create one (covers users who signed up before profile creation was added)
+      if (error?.code === 'PGRST116') {
+        const role = email === ADMIN_EMAIL ? 'admin' : 'user';
+        await supabase.from('profiles').insert({ id: userId, role });
+        setProfile({ id: userId, role });
+        return;
+      }
+
+      if (error) {
         console.error('Error fetching profile:', error);
       }
 
-      // Hardcoded admin check as fallback/priority
       const isAdmin = email === ADMIN_EMAIL || data?.role === 'admin';
-      
       setProfile({
         ...data,
-        role: isAdmin ? 'admin' : (data?.role || 'user')
+        role: isAdmin ? 'admin' : (data?.role || 'user'),
       });
     } catch (err) {
       console.error('Profile fetch failed or timed out:', err);
-      // Fallback for identified admin email even if fetch fails
       const isAdmin = email === ADMIN_EMAIL;
-      setProfile({
-        role: isAdmin ? 'admin' : 'user'
-      });
+      setProfile({ role: isAdmin ? 'admin' : 'user' });
     }
   };
 
