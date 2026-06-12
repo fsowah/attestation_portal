@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { supabase } from '../../../supabaseClient';
 import { AlertCircle, Loader2 } from 'lucide-react';
+import 'react-phone-number-input/style.css';
+import PhoneInput from 'react-phone-number-input';
 
 const LoginSection = ({ onBack, onSignUp, onSuccess, onForgotPassword }) => {
   const [loginMethod, setLoginMethod] = useState('email'); // 'email' or 'phone'
@@ -16,10 +18,11 @@ const LoginSection = ({ onBack, onSignUp, onSuccess, onForgotPassword }) => {
     setError(null);
 
     try {
-      const { data, error: loginError } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
+      const credentials = loginMethod === 'email' 
+        ? { email, password }
+        : { phone: email, password };
+
+      const { data, error: loginError } = await supabase.auth.signInWithPassword(credentials);
 
       if (loginError) throw loginError;
 
@@ -93,14 +96,26 @@ const LoginSection = ({ onBack, onSignUp, onSuccess, onForgotPassword }) => {
             <label className="text-neutral-500 font-bold text-[9px] uppercase tracking-wider">
               {loginMethod === 'email' ? 'EMAIL ADDRESS' : 'PHONE NUMBER'}
             </label>
-            <input 
-              type={loginMethod === 'email' ? 'email' : 'tel'} 
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder={loginMethod === 'email' ? 'Email Address' : 'Phone Number'} 
-              className="w-full h-10 px-4 border border-neutral-200 rounded-lg focus:outline-none focus:border-brand-navy-700 transition-colors placeholder:text-neutral-300 text-neutral-800 text-sm" 
-            />
+            {loginMethod === 'email' ? (
+              <input 
+                type="email" 
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="Email Address" 
+                className="w-full h-10 px-4 border border-neutral-200 rounded-lg focus:outline-none focus:border-brand-navy-700 transition-colors placeholder:text-neutral-300 text-neutral-800 text-sm" 
+              />
+            ) : (
+              <div className="phone-input-container">
+                <PhoneInput
+                  placeholder="Enter phone number"
+                  value={email}
+                  onChange={setEmail}
+                  defaultCountry="GH"
+                  className="w-full h-10 px-4 border border-neutral-200 rounded-lg focus-within:border-brand-navy-700 transition-colors text-neutral-800 text-sm flex items-center gap-3 bg-white"
+                />
+              </div>
+            )}
           </div>
 
           <div className="space-y-1.5">

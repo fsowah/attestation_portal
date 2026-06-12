@@ -1,11 +1,19 @@
 import React, { useState, useRef } from 'react';
+import { AlertCircle, Loader2 } from 'lucide-react';
 
-const VerificationSection = ({ onBack, onVerify }) => {
+const VerificationSection = ({ onBack, onVerify, isLoading, error, onResend }) => {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const otpRefs = useRef([]);
 
+  const handleVerifyClick = () => {
+    const code = otp.join('');
+    if (code.length === 6) {
+      onVerify(code);
+    }
+  };
+
   const handleOtpChange = (index, value) => {
-    if (value.length > 1) return; // Prevent multiple chars
+    if (value.length > 1) return; // Prevent multiple chars unless pasted
     const newOtp = [...otp];
     newOtp[index] = value;
     setOtp(newOtp);
@@ -14,6 +22,23 @@ const VerificationSection = ({ onBack, onVerify }) => {
     if (value !== '' && index < 5) {
       otpRefs.current[index + 1].focus();
     }
+  };
+
+  const handlePaste = (e) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData('text').slice(0, 6).split('');
+    if (pastedData.length === 0) return;
+    
+    const newOtp = [...otp];
+    pastedData.forEach((char, index) => {
+      if (index < 6 && /^[0-9]$/.test(char)) {
+        newOtp[index] = char;
+      }
+    });
+    setOtp(newOtp);
+    
+    const lastIndex = Math.min(pastedData.length, 5);
+    otpRefs.current[lastIndex].focus();
   };
 
   const handleOtpKeyDown = (index, e) => {
@@ -43,6 +68,13 @@ const VerificationSection = ({ onBack, onVerify }) => {
           </p>
         </div>
 
+        {error && (
+          <div className="mb-6 w-full p-4 bg-red-50 border border-red-100 rounded-xl flex items-center gap-3 text-red-600 animate-shake">
+            <AlertCircle className="w-5 h-5 shrink-0" />
+            <p className="text-xs font-bold leading-tight">{error}</p>
+          </div>
+        )}
+
         <div className="flex gap-2 lg:gap-3 mb-8 justify-center">
           {otp.map((digit, index) => (
             <input
@@ -54,14 +86,15 @@ const VerificationSection = ({ onBack, onVerify }) => {
               value={digit}
               onChange={(e) => handleOtpChange(index, e.target.value)}
               onKeyDown={(e) => handleOtpKeyDown(index, e)}
-              className="w-11 h-16 lg:w-[60px] lg:h-[80px] text-center text-xl lg:text-2xl font-bold bg-[#fffce5]/50 border border-brand-gold-800 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-gold-500 transition-all text-neutral-800"
+              onPaste={handlePaste}
+              className="w-11 h-16 lg:w-[60px] lg:h-[80px] text-center text-xl lg:text-2xl font-bold bg-[#fffdf0] border border-[#e5c05c] rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-gold-500 transition-all text-neutral-800"
             />
           ))}
         </div>
 
         <div className="text-center space-y-2 mb-8">
           <p className="text-[13px] font-medium text-neutral-400">
-            Didn't receive the code? <span className="text-brand-gold-700 font-bold cursor-pointer hover:underline">Resend it</span>
+            Didn't receive the code? <span onClick={onResend} className="text-[#facc15] font-bold cursor-pointer hover:underline">Resend it</span>
           </p>
           <p className="text-[13px] font-medium text-neutral-600">
             Code expires in 00:32
@@ -69,10 +102,11 @@ const VerificationSection = ({ onBack, onVerify }) => {
         </div>
 
         <button 
-          onClick={onVerify}
-          className="w-full h-10 bg-brand-gold-500 hover:bg-brand-gold-700 text-brand-navy-700 font-bold text-sm rounded-lg transition-all shadow-sm mb-4"
+          onClick={handleVerifyClick}
+          disabled={isLoading || otp.join('').length < 6}
+          className="w-full h-12 bg-[#fcd34d] hover:bg-[#facc15] text-[#1e293b] font-bold text-[15px] rounded-lg transition-all shadow-sm mb-4 flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
         >
-          Verify
+          {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Verify'}
         </button>
 
         <div className="text-center">

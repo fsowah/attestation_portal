@@ -25,10 +25,12 @@ const AuthSection = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [resetPhone, setResetPhone] = useState('');
+  const [isResettingPassword, setIsResettingPassword] = useState(false);
 
-  const goToSignUp = () => { setView('signup'); setIsMenuOpen(false); setError(null); };
-  const goToWelcome = () => { setView('welcome'); setIsMenuOpen(false); setError(null); };
-  const goToSignIn = () => { setView('signin'); setIsMenuOpen(false); setError(null); };
+  const goToSignUp = () => { setView('signup'); setIsMenuOpen(false); setError(null); setIsResettingPassword(false); };
+  const goToWelcome = () => { setView('welcome'); setIsMenuOpen(false); setError(null); setIsResettingPassword(false); };
+  const goToSignIn = () => { setView('signin'); setIsMenuOpen(false); setError(null); setIsResettingPassword(false); };
   const goToOtp = () => { setView('otp'); setIsMenuOpen(false); setError(null); };
   const goToForgotPassword = () => { setView('forgotpassword'); setIsMenuOpen(false); setError(null); };
   const goToSetPassword = () => { setView('setpassword'); setIsMenuOpen(false); setError(null); };
@@ -56,9 +58,18 @@ const AuthSection = () => {
       if (signUpError) throw signUpError;
 
       if (data.user) {
+        // Link the phone number to the auth identity so they can login with it
+        const { error: phoneError } = await supabase.auth.updateUser({
+          phone: phoneNumber
+        });
+        if (phoneError) {
+          console.error("Could not link phone number to auth identity:", phoneError);
+        }
+
         await supabase.from('profiles').upsert({
           id: data.user.id,
           full_name: fullName,
+          phone_number: phoneNumber,
           role: 'user',
         }, { onConflict: 'id' });
 
@@ -73,6 +84,72 @@ const AuthSection = () => {
 
   const handleLoginSuccess = () => {
     navigate('/dashboard');
+  };
+
+  const handleSendResetCode = async (phone) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const { error: otpError } = await supabase.auth.signInWithOtp({
+        phone,
+        options: {
+          shouldCreateUser: false,
+        }
+      });
+      if (otpError) {
+        if (otpError.message.includes('Signups not allowed')) {
+          throw new Error('No account found with this phone number.');
+        }
+        throw otpError;
+      }
+      setResetPhone(phone);
+      setIsResettingPassword(true);
+      goToOtp();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async (otpValue) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const { error: verifyError } = await supabase.auth.verifyOtp({
+        phone: isResettingPassword ? resetPhone : phoneNumber,
+        token: otpValue,
+        type: 'sms',
+      });
+      if (verifyError) throw verifyError;
+      
+      if (isResettingPassword) {
+        goToSetPassword();
+      } else {
+        handleLoginSuccess();
+      }
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSetNewPassword = async (newPassword) => {
+    setIsLoading(true);
+    setError(null);
+    try {
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+      if (updateError) throw updateError;
+      setIsResettingPassword(false);
+      handleLoginSuccess();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -368,10 +445,14 @@ const AuthSection = () => {
 
         {view === 'otp' && (
           <VerificationSection
-            onBack={goToSignUp}
-            onVerify={() => {
-              console.log('OTP Verified');
-              handleLoginSuccess();
+            onBack={isResettingPassword ? goToForgotPassword : goToSignUp}
+            onVerify={handleVerifyOTP}
+            isLoading={isLoading}
+            error={error}
+            onResend={() => {
+              if (isResettingPassword && resetPhone) {
+                handleSendResetCode(resetPhone);
+              }
             }}
           />
         )}
@@ -379,19 +460,17 @@ const AuthSection = () => {
         {view === 'forgotpassword' && (
           <ForgotPasswordSection
             onBack={goToSignIn}
-            onSendCode={(phone) => {
-              console.log('Sending reset code to:', phone);
-              goToOtp();
-            }}
+            onSendCode={handleSendResetCode}
+            isLoading={isLoading}
+            error={error}
           />
         )}
 
         {view === 'setpassword' && (
           <SetPasswordSection
-            onComplete={() => {
-              console.log('Password set successfully');
-              handleLoginSuccess();
-            }}
+            onComplete={handleSetNewPassword}
+            isLoading={isLoading}
+            error={error}
           />
         )}
       </div>

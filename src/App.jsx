@@ -8,14 +8,10 @@ import ApplicationsPage from './pages/dashboard/ApplicationsPage';
 import NewApplicationPage from './pages/dashboard/NewApplicationPage';
 import InvoicesPage from './pages/dashboard/InvoicesPage';
 import TrackStatusPage from './pages/dashboard/TrackStatusPage';
-
-// Admin Pages
-import AdminLayout from './pages/admin/AdminLayout';
-import AdminDashboard from './pages/admin/AdminDashboard';
-import AdminApplications from './pages/admin/AdminApplications';
-import AdminApplicationDetail from './pages/admin/AdminApplicationDetail';
-import AdminAppointments from './pages/admin/AdminAppointments';
-import AdminUsers from './pages/admin/AdminUsers';
+import OfficerLogin from './pages/officer/Login/OfficerLogin';
+import OfficerDashboard from './pages/officer/Dashboard/OfficerDashboard';
+import OfficerLayout from './pages/officer/layout/OfficerLayout';
+import OfficerAppointments from './pages/officer/Appointments/OfficerAppointments';
 
 function App() {
   return (
@@ -25,6 +21,15 @@ function App() {
           <Routes>
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login />} />
+            
+            {/* Officer Routes */}
+            <Route path="/officer/login" element={<OfficerLogin />} />
+            <Route path="/officer" element={<OfficerLayout />}>
+              <Route path="dashboard" element={<OfficerDashboard />} />
+              <Route path="submissions" element={<OfficerDashboard />} />
+              <Route path="appointments" element={<OfficerAppointments />} />
+              <Route index element={<Navigate to="submissions" replace />} />
+            </Route>
 
             {/* Applicant Routes */}
             <Route
@@ -40,23 +45,6 @@ function App() {
               <Route path="new-application" element={<NewApplicationPage />} />
               <Route path="invoices" element={<InvoicesPage />} />
               <Route path="track-status" element={<TrackStatusPage />} />
-            </Route>
-
-            {/* Admin Routes */}
-            <Route
-              path="/admin"
-              element={
-                <ProtectedRoute allowedRole="admin">
-                  <AdminLayout />
-                </ProtectedRoute>
-              }
-            >
-              <Route index element={<AdminDashboard />} />
-              <Route path="applications" element={<AdminApplications />} />
-              <Route path="applications/:id" element={<AdminApplicationDetail />} />
-              <Route path="appointments" element={<AdminAppointments />} />
-              <Route path="users" element={<AdminUsers />} />
-              <Route path="settings" element={<div className="p-8">Settings Screen Coming Soon</div>} />
             </Route>
 
             {/* Fallback */}
