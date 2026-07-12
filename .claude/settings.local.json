@@ -7,6 +7,7 @@
       "Bash(npm install *)",
       "Bash(npx vite *)",
       "Bash(powershell -Command ' *)"
+      "Bash(ssh *)"
     ]
   }
 }
