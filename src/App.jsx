@@ -12,7 +12,19 @@ import OfficerLogin from './pages/officer/Login/OfficerLogin';
 import OfficerDashboard from './pages/officer/Dashboard/OfficerDashboard';
 import OfficerLayout from './pages/officer/layout/OfficerLayout';
 import OfficerAppointments from './pages/officer/Appointments/OfficerAppointments';
-
+import AdminLogin from './admin/pages/Login/AdminLogin';
+import AdminLayout from './admin/layouts/AdminLayout';
+import AdminDashboard from './admin/pages/Dashboard/AdminDashboard';
+import RolesPermissions from './admin/pages/Users/RolesPermissions';
+import RolesList from './admin/pages/Users/RolesList';
+import SlotConfiguration from './admin/pages/Configuration/SlotConfiguration';
+import BlackoutDates from './admin/pages/Configuration/BlackoutDates';
+import AuditLogs from './admin/pages/Support/AuditLogs';
+import UserManagement from './admin/pages/Users/UserManagement';
+import PortalSettings from './admin/pages/Configuration/PortalSettings';
+import FeesAndTiers from './admin/pages/Configuration/FeesAndTiers';
+import SmsNotifications from './admin/pages/Configuration/SmsNotifications';
+import SupportTickets from './admin/pages/Support/SupportTickets';
 function App() {
   return (
     <AuthProvider>
@@ -29,6 +41,24 @@ function App() {
               <Route path="submissions" element={<OfficerDashboard />} />
               <Route path="appointments" element={<OfficerAppointments />} />
               <Route index element={<Navigate to="submissions" replace />} />
+            </Route>
+
+            {/* Admin Routes */}
+            <Route path="/admin/login" element={<AdminLogin />} />
+            <Route path="/admin" element={<AdminLayout />}>
+              <Route path="dashboard" element={<AdminDashboard />} />
+              <Route path="config/slots" element={<SlotConfiguration />} />
+              <Route path="config/blackout" element={<BlackoutDates />} />
+              <Route path="config/portal" element={<PortalSettings />} />
+              <Route path="config/fees" element={<FeesAndTiers />} />
+              <Route path="config/sms" element={<SmsNotifications />} />
+              <Route path="users/management" element={<UserManagement />} />
+              <Route path="users/roles" element={<RolesList />} />
+              <Route path="users/roles/edit" element={<RolesPermissions />} />
+              <Route path="users/roles/edit/:roleId" element={<RolesPermissions />} />
+              <Route path="support/tickets" element={<SupportTickets />} />
+              <Route path="support/logs" element={<AuditLogs />} />
+              <Route index element={<Navigate to="dashboard" replace />} />
             </Route>
 
             {/* Applicant Routes */}

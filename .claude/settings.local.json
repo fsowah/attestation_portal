@@ -2,6 +2,11 @@
   "permissions": {
     "allow": [
       "Bash(npm run *)",
+      "WebFetch(domain:claude.ai)",
+      "Bash(npm create *)",
+      "Bash(npm install *)",
+      "Bash(npx vite *)",
+      "Bash(powershell -Command ' *)"
       "Bash(ssh *)"
     ]
   }
