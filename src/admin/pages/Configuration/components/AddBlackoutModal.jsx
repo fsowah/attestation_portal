@@ -1,7 +1,79 @@
-import React from 'react';
-import { X, Calendar as CalendarIcon, ChevronDown, Check } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Calendar as CalendarIcon, ChevronDown, Check, Loader2 } from 'lucide-react';
+import { supabase } from '../../../../supabaseClient';
 
-const AddBlackoutModal = ({ isOpen, onClose }) => {
+const AddBlackoutModal = ({ isOpen, onClose, onSaved }) => {
+  const [date, setDate] = useState('');
+  const [type, setType] = useState('Public holiday');
+  const [reason, setReason] = useState('');
+  const [blockBookings, setBlockBookings] = useState(true);
+  const [cancelExisting, setCancelExisting] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState(null);
+
+  // Reset on open/close
+  useEffect(() => {
+    if (!isOpen) {
+      setDate('');
+      setType('Public holiday');
+      setReason('');
+      setBlockBookings(true);
+      setCancelExisting(false);
+      setError(null);
+    }
+  }, [isOpen]);
+
+  const handleSave = async () => {
+    if (!date || !reason) {
+      setError('Please fill in the date and reason.');
+      return;
+    }
+
+    setIsSaving(true);
+    setError(null);
+
+    try {
+      const { error: insertError } = await supabase
+        .from('blackout_dates')
+        .insert({
+          date,
+          reason,
+          type,
+          block_bookings: blockBookings,
+          cancel_existing: cancelExisting,
+        });
+
+      if (insertError) {
+        if (insertError.code === '23505') {
+          throw new Error('A blackout date already exists for this date.');
+        }
+        throw insertError;
+      }
+
+      // If blocking bookings, also mark any existing slots as unavailable
+      if (blockBookings) {
+        await supabase
+          .from('appointment_slots')
+          .update({ is_available: false })
+          .eq('date', date);
+      }
+
+      // Log audit
+      await supabase.from('audit_logs').insert({
+        category: 'Config',
+        action: `Blackout date added: ${date} - ${reason}`,
+        actor_name: 'Admin',
+      });
+
+      onSaved?.();
+    } catch (err) {
+      console.error('Error adding blackout date:', err);
+      setError(err.message || 'Failed to add blackout date');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   return (
     <>
       {/* Backdrop */}
@@ -28,25 +100,36 @@ const AddBlackoutModal = ({ isOpen, onClose }) => {
 
           {/* Form Content */}
           <div className="px-6 pb-6 flex flex-col gap-6">
+
+            {error && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700 font-medium">
+                {error}
+              </div>
+            )}
             
             {/* Top Row: Date and Type */}
             <div className="flex gap-4">
               <div className="flex-1">
                 <label className="block text-[10px] font-bold text-gray-700 uppercase mb-2 tracking-wider">Date</label>
-                <div className="flex rounded-lg border border-gray-200 overflow-hidden h-[42px] bg-white">
-                  <input type="text" placeholder="DD / MM / YYYY" className="flex-1 w-full pl-3 text-[13px] font-medium text-gray-400 focus:outline-none" />
-                  <div className="w-10 bg-gray-100 flex items-center justify-center border-l border-gray-200 shrink-0">
-                    <CalendarIcon className="w-4 h-4 text-gray-400" />
-                  </div>
-                </div>
+                <input 
+                  type="date"
+                  value={date}
+                  onChange={e => setDate(e.target.value)}
+                  className="w-full bg-white border border-gray-200 rounded-lg px-4 h-[42px] text-[13px] font-medium text-gray-600 focus:outline-none focus:border-blue-500"
+                />
               </div>
               
               <div className="flex-1">
                 <label className="block text-[10px] font-bold text-gray-700 uppercase mb-2 tracking-wider">Type</label>
                 <div className="relative">
-                  <select className="w-full appearance-none bg-white border border-gray-200 rounded-lg px-4 h-[42px] text-[13px] font-medium text-gray-400 focus:outline-none">
-                    <option>Public holiday</option>
-                    <option>Maintenance</option>
+                  <select 
+                    value={type}
+                    onChange={e => setType(e.target.value)}
+                    className="w-full appearance-none bg-white border border-gray-200 rounded-lg px-4 h-[42px] text-[13px] font-medium text-gray-600 focus:outline-none"
+                  >
+                    <option value="Public holiday">Public holiday</option>
+                    <option value="Maintenance">Maintenance</option>
+                    <option value="Custom">Custom</option>
                   </select>
                   <ChevronDown className="w-4 h-4 text-gray-400 absolute right-3 top-3 pointer-events-none" />
                 </div>
@@ -58,8 +141,10 @@ const AddBlackoutModal = ({ isOpen, onClose }) => {
               <label className="block text-[10px] font-bold text-gray-700 uppercase mb-2 tracking-wider">Reason (Shown to citizens)</label>
               <input 
                 type="text" 
+                value={reason}
+                onChange={e => setReason(e.target.value)}
                 placeholder="Independence Day - Public holiday" 
-                className="w-full bg-white border border-gray-200 rounded-lg px-4 h-[42px] text-[13px] font-medium text-gray-400 focus:outline-none focus:border-blue-500"
+                className="w-full bg-white border border-gray-200 rounded-lg px-4 h-[42px] text-[13px] font-medium text-gray-600 focus:outline-none focus:border-blue-500"
               />
             </div>
 
@@ -68,18 +153,18 @@ const AddBlackoutModal = ({ isOpen, onClose }) => {
               <label className="block text-[10px] font-bold text-gray-700 uppercase mb-3 tracking-wider">Affected Areas</label>
               
               <div className="flex flex-col gap-3">
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <div className="w-4 h-4 border border-gray-300 rounded-[4px] flex items-center justify-center bg-gray-50 group-hover:border-gray-400 transition-colors">
-                    <Check className="w-3 h-3 text-transparent" />
+                <label className="flex items-center gap-3 cursor-pointer group" onClick={() => setBlockBookings(!blockBookings)}>
+                  <div className={`w-4 h-4 border rounded-[4px] flex items-center justify-center transition-colors ${blockBookings ? 'bg-[#1e293b] border-[#1e293b]' : 'border-gray-300 bg-gray-50 group-hover:border-gray-400'}`}>
+                    {blockBookings && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
                   </div>
-                  <span className="text-[13px] font-medium text-gray-400">Block all new appointment bookings</span>
+                  <span className="text-[13px] font-medium text-gray-600">Block all new appointment bookings</span>
                 </label>
 
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <div className="w-4 h-4 border border-gray-300 rounded-[4px] flex items-center justify-center bg-gray-50 group-hover:border-gray-400 transition-colors">
-                    <Check className="w-3 h-3 text-transparent" />
+                <label className="flex items-center gap-3 cursor-pointer group" onClick={() => setCancelExisting(!cancelExisting)}>
+                  <div className={`w-4 h-4 border rounded-[4px] flex items-center justify-center transition-colors ${cancelExisting ? 'bg-[#1e293b] border-[#1e293b]' : 'border-gray-300 bg-gray-50 group-hover:border-gray-400'}`}>
+                    {cancelExisting && <Check className="w-3 h-3 text-white" strokeWidth={3} />}
                   </div>
-                  <span className="text-[13px] font-medium text-gray-400">Cancel existing appointments on this date</span>
+                  <span className="text-[13px] font-medium text-gray-600">Cancel existing appointments on this date</span>
                 </label>
               </div>
             </div>
@@ -94,7 +179,12 @@ const AddBlackoutModal = ({ isOpen, onClose }) => {
             >
               Cancel
             </button>
-            <button className="px-6 py-2.5 rounded-lg bg-[#e11d48] hover:bg-[#be123c] text-white text-[13px] font-bold shadow-sm transition-colors">
+            <button 
+              onClick={handleSave}
+              disabled={isSaving}
+              className="px-6 py-2.5 rounded-lg bg-[#e11d48] hover:bg-[#be123c] text-white text-[13px] font-bold shadow-sm transition-colors flex items-center gap-2"
+            >
+              {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
               Add blackout date
             </button>
           </div>

@@ -1,50 +1,162 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Calendar as CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-react';
+import { supabase } from '../../../supabaseClient';
 import EditSlotDrawer from './components/EditSlotDrawer';
 import WeekView from './components/WeekView';
 import MonthView from './components/MonthView';
 
 const SlotConfiguration = () => {
-  const [view, setView] = useState('Week'); // 'Week' or 'Month'
+  const [view, setView] = useState('Week');
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
+  const [slots, setSlots] = useState([]);
+  const [blackoutDates, setBlackoutDates] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [weekOffset, setWeekOffset] = useState(0);
+  const [monthOffset, setMonthOffset] = useState(0);
 
-  // Hardcoded mock data based on Figma design
-  const weekSlots = [
-    { id: 1, day: 'Mon 18', time: '9:00 AM', cap: 5, status: 'open', tier: 'Express + Standard' },
-    { id: 2, day: 'Tue 19', time: '9:00 AM', cap: 5, status: 'open', tier: 'Standard only' },
-    { id: 3, day: 'Wed 20', time: '9:00 AM', cap: 5, status: 'open', tier: 'Express + Standard' },
-    { id: 4, day: 'Thur 21', time: '9:00 AM', cap: 5, status: 'open', tier: 'Express + Standard' },
-    { id: 5, day: 'Fri 22', time: '9:00 AM', status: 'blackout', note: 'No bookings' },
-    { id: 6, day: 'Wed 20', time: '10:00 AM', cap: 5, status: 'open', tier: 'Standard only' },
-    { id: 7, day: 'Thur 21', time: '10:00 AM', cap: 5, status: 'open', tier: 'Standard only' },
-    { id: 8, day: 'Fri 22', time: '10:00 AM', cap: 5, status: 'open', tier: 'Express only' },
-    { id: 9, day: 'Mon 18', time: '12:00 PM', status: 'blackout', note: 'No bookings' },
-    { id: 10, day: 'Tue 19', time: '12:00 PM', status: 'blackout', note: 'No bookings' },
-    { id: 11, day: 'Wed 20', time: '12:00 PM', status: 'blackout', note: 'No bookings' },
-    { id: 12, day: 'Thur 21', time: '12:00 PM', status: 'blackout', note: 'No bookings' },
-    { id: 13, day: 'Fri 22', time: '12:00 PM', status: 'blackout', note: 'No bookings' },
-  ];
+  // Calculate date ranges
+  const getWeekRange = useCallback(() => {
+    const today = new Date();
+    const dayOfWeek = today.getDay();
+    const diffToMon = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
+    const monday = new Date(today);
+    monday.setDate(today.getDate() + diffToMon + weekOffset * 7);
+    const friday = new Date(monday);
+    friday.setDate(monday.getDate() + 4);
+    return { start: monday, end: friday };
+  }, [weekOffset]);
 
-  const monthSlots = [
-    { date: 4, slots: [{ time: '9:00 AM', status: 'open' }, { time: '10:00 AM', status: 'open' }, { time: '2:00 PM', status: 'open' }], extra: '+2' },
-    { date: 5, slots: [{ time: '9:00 AM', status: 'open' }, { time: '11:00 AM', status: 'open' }, { time: '2:00 PM', status: 'open' }] },
-    { date: 6, slots: [{ time: '9:00 AM', status: 'open' }, { time: '10:00 AM', status: 'open' }, { time: '2:00 PM', status: 'open' }], extra: '+1' },
-    { date: 7, slots: [{ time: '9:00 AM', status: 'open' }, { time: '10:00 AM', status: 'open' }, { time: '2:00 PM', status: 'open' }] },
-    { date: 8, slots: [{ time: '9:00 AM', status: 'open' }, { time: '10:00 AM', status: 'open' }, { time: '2:00 PM', status: 'open' }] },
-    
-    { date: 11, slots: [{ time: '9:00 AM', status: 'open' }, { time: '10:00 AM', status: 'open' }, { time: '2:00 PM', status: 'open' }], extra: '+2' },
-    { date: 12, slots: [{ time: '9:00 AM', status: 'blackout' }, { time: '10:00 AM', status: 'blackout' }] },
-    { date: 13, slots: [{ time: '9:00 AM', status: 'open' }, { time: '2:00 PM', status: 'open' }, { time: '4:00 PM', status: 'open' }] },
-    { date: 14, slots: [{ time: '9:00 AM', status: 'open' }, { time: '10:00 AM', status: 'open' }, { time: '2:00 PM', status: 'open' }], extra: '+2' },
-    { date: 15, slots: [{ time: '9:00 AM', status: 'open' }, { time: '10:00 AM', status: 'open' }] },
+  const getMonthRange = useCallback(() => {
+    const today = new Date();
+    const first = new Date(today.getFullYear(), today.getMonth() + monthOffset, 1);
+    const last = new Date(today.getFullYear(), today.getMonth() + monthOffset + 1, 0);
+    return { start: first, end: last, month: first };
+  }, [monthOffset]);
 
-    { date: 18, slots: [{ time: '9:00 AM', status: 'open' }, { time: '10:00 AM', status: 'open' }, { time: '2:00 PM', status: 'open' }], extra: '+2' },
-    { date: 19, slots: [{ time: '9:00 AM', status: 'blackout' }, { time: '10:00 AM', status: 'blackout' }] },
-    { date: 20, slots: [{ time: '9:00 AM', status: 'blackout' }, { time: '10:00 AM', status: 'blackout' }] },
-    { date: 21, slots: [{ time: '9:00 AM', status: 'blackout' }, { time: '10:00 AM', status: 'blackout' }] },
-    { date: 22, slots: [{ time: '9:00 AM', status: 'blackout' }, { time: '10:00 AM', status: 'blackout' }] },
-  ];
+  const formatDate = (d) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const fetchSlots = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      let startDate, endDate;
+      if (view === 'Week') {
+        const range = getWeekRange();
+        startDate = formatDate(range.start);
+        endDate = formatDate(range.end);
+      } else {
+        const range = getMonthRange();
+        startDate = formatDate(range.start);
+        endDate = formatDate(range.end);
+      }
+
+      const { data, error } = await supabase
+        .from('appointment_slots')
+        .select('*')
+        .gte('date', startDate)
+        .lte('date', endDate)
+        .order('date', { ascending: true })
+        .order('time', { ascending: true });
+
+      if (error) throw error;
+      setSlots(data || []);
+
+      // Also fetch blackout dates for the range
+      const { data: blackouts } = await supabase
+        .from('blackout_dates')
+        .select('date')
+        .gte('date', startDate)
+        .lte('date', endDate);
+
+      setBlackoutDates((blackouts || []).map(b => b.date));
+    } catch (err) {
+      console.error('Error fetching slots:', err);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [view, getWeekRange, getMonthRange]);
+
+  useEffect(() => {
+    fetchSlots();
+  }, [fetchSlots]);
+
+  // Transform DB slots into the format WeekView expects
+  const dayLabels = ['Mon', 'Tue', 'Wed', 'Thur', 'Fri'];
+  const getWeekSlots = () => {
+    const range = getWeekRange();
+    const weekSlots = [];
+
+    slots.forEach(slot => {
+      const slotDate = new Date(slot.date + 'T00:00:00');
+      const dayIdx = Math.round((slotDate - range.start) / (1000 * 60 * 60 * 24));
+      if (dayIdx < 0 || dayIdx > 4) return;
+      const dayNum = slotDate.getDate();
+      const dayLabel = `${dayLabels[dayIdx]} ${dayNum}`;
+
+      weekSlots.push({
+        id: slot.id,
+        day: dayLabel,
+        time: slot.time,
+        cap: slot.capacity,
+        status: slot.is_available ? 'open' : 'blackout',
+        tier: slot.tier || 'Express + Standard',
+        note: slot.note,
+        date: slot.date,
+        dbSlot: slot
+      });
+    });
+
+    // Add blackout placeholders for dates with no slots
+    for (let i = 0; i < 5; i++) {
+      const d = new Date(range.start);
+      d.setDate(range.start.getDate() + i);
+      const dateStr = formatDate(d);
+      if (blackoutDates.includes(dateStr)) {
+        const hasSlotForDay = weekSlots.some(s => s.date === dateStr);
+        if (!hasSlotForDay) {
+          weekSlots.push({
+            id: `blackout-${dateStr}`,
+            day: `${dayLabels[i]} ${d.getDate()}`,
+            time: '9:00 AM',
+            status: 'blackout',
+            note: 'Blackout date',
+            date: dateStr
+          });
+        }
+      }
+    }
+
+    return weekSlots;
+  };
+
+  // Transform DB slots into the format MonthView expects
+  const getMonthSlots = () => {
+    const grouped = {};
+    slots.forEach(slot => {
+      const day = new Date(slot.date + 'T00:00:00').getDate();
+      if (!grouped[day]) grouped[day] = [];
+      grouped[day].push({
+        time: slot.time,
+        status: slot.is_available ? 'open' : 'blackout',
+        id: slot.id,
+        dbSlot: slot
+      });
+    });
+
+    return Object.entries(grouped).map(([date, daySlots]) => {
+      const extra = daySlots.length > 3 ? `+${daySlots.length - 3}` : undefined;
+      return {
+        date: parseInt(date),
+        slots: daySlots.slice(0, 3),
+        extra
+      };
+    });
+  };
 
   const handleAddSlot = () => {
     setSelectedSlot(null);
@@ -52,8 +164,40 @@ const SlotConfiguration = () => {
   };
 
   const handleEditSlot = (slot) => {
-    setSelectedSlot(slot);
+    setSelectedSlot(slot.dbSlot || slot);
     setDrawerOpen(true);
+  };
+
+  const handleDrawerClose = () => {
+    setDrawerOpen(false);
+    setSelectedSlot(null);
+  };
+
+  const handleSlotSaved = () => {
+    handleDrawerClose();
+    fetchSlots();
+  };
+
+  // Date range labels
+  const getDateLabel = () => {
+    if (view === 'Week') {
+      const range = getWeekRange();
+      const fmt = (d) => d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      return `${fmt(range.start)} - ${fmt(range.end)}`;
+    } else {
+      const range = getMonthRange();
+      return range.month.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    }
+  };
+
+  const handlePrev = () => {
+    if (view === 'Week') setWeekOffset(w => w - 1);
+    else setMonthOffset(m => m - 1);
+  };
+
+  const handleNext = () => {
+    if (view === 'Week') setWeekOffset(w => w + 1);
+    else setMonthOffset(m => m + 1);
   };
 
   return (
@@ -78,10 +222,18 @@ const SlotConfiguration = () => {
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-4">
             
-            {/* Date Range/Picker */}
-            <div className="flex items-center gap-2 bg-[#f1f5f9] px-3 py-1.5 rounded-md text-sm font-medium text-[#475569] border border-gray-200">
-              <CalendarIcon className="w-4 h-4 text-gray-500" />
-              <span>{view === 'Week' ? 'May 18 2026 - May 22 2026' : 'May 2026'}</span>
+            {/* Navigation + Date Range */}
+            <div className="flex items-center gap-2">
+              <button onClick={handlePrev} className="w-7 h-7 flex items-center justify-center border border-gray-200 rounded-md text-gray-400 hover:bg-gray-50 transition-colors">
+                <ChevronLeft className="w-4 h-4" />
+              </button>
+              <div className="flex items-center gap-2 bg-[#f1f5f9] px-3 py-1.5 rounded-md text-sm font-medium text-[#475569] border border-gray-200">
+                <CalendarIcon className="w-4 h-4 text-gray-500" />
+                <span>{getDateLabel()}</span>
+              </div>
+              <button onClick={handleNext} className="w-7 h-7 flex items-center justify-center border border-gray-200 rounded-md text-gray-400 hover:bg-gray-50 transition-colors">
+                <ChevronRight className="w-4 h-4" />
+              </button>
             </div>
 
             {/* View Toggle */}
@@ -114,20 +266,29 @@ const SlotConfiguration = () => {
           </div>
         </div>
 
-        {/* Dynamic View Rendering */}
-        {view === 'Week' ? (
-          <WeekView slots={weekSlots} onSlotClick={handleEditSlot} onEmptyClick={handleAddSlot} />
+        {/* Loading State */}
+        {isLoading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#1e293b]"></div>
+          </div>
         ) : (
-          <MonthView slots={monthSlots} onSlotClick={handleEditSlot} onEmptyClick={handleAddSlot} />
+          <>
+            {/* Dynamic View Rendering */}
+            {view === 'Week' ? (
+              <WeekView slots={getWeekSlots()} onSlotClick={handleEditSlot} onEmptyClick={handleAddSlot} />
+            ) : (
+              <MonthView slots={getMonthSlots()} onSlotClick={handleEditSlot} onEmptyClick={handleAddSlot} />
+            )}
+          </>
         )}
-
       </div>
 
       {/* Drawer */}
       <EditSlotDrawer 
         isOpen={drawerOpen} 
-        onClose={() => setDrawerOpen(false)} 
+        onClose={handleDrawerClose} 
         slotData={selectedSlot}
+        onSaved={handleSlotSaved}
       />
     </div>
   );

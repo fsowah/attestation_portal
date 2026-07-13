@@ -160,9 +160,19 @@ const NewApplicationSteps = ({ onBack, onTrack }) => {
         }
       }
 
+      // Get assigned officer
+      let assignedOfficerId = null;
+      try {
+        const { data: officerId } = await supabase.rpc('assign_officer_round_robin');
+        if (officerId) assignedOfficerId = officerId;
+      } catch (err) {
+        console.warn('Could not auto-assign officer:', err);
+      }
+
       const submissionData = {
         id: appNumber,
         user_id: user.id,
+        assigned_officer_id: assignedOfficerId,
         // Step 1: Personal Details (individual columns + JSON backup)
         full_name: applicationData.personalDetails?.fullName || '',
         phone_number: applicationData.personalDetails?.phoneNumber || '',

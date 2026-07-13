@@ -31,7 +31,7 @@ const OfficerDashboard = () => {
   return (
     <div className="w-full max-w-[1400px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
       <OfficerDashboardMetrics applications={applications} isLoading={isLoading} />
-      <OfficerSubmissionsTable applications={applications} isLoading={isLoading} />
+      <OfficerSubmissionsTable applications={applications} isLoading={isLoading} onRefresh={fetchApplications} />
     </div>
   );
 };

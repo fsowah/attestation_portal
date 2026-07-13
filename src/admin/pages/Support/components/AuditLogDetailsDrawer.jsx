@@ -21,6 +21,13 @@ const AuditLogDetailsDrawer = ({ isOpen, onClose, logData }) => {
     }
   };
 
+  const formatTimestamp = (ts) => {
+    if (!ts) return '';
+    const d = new Date(ts);
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) + ' ' +
+           d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  };
+
   return (
     <>
       {/* Backdrop */}
@@ -39,7 +46,7 @@ const AuditLogDetailsDrawer = ({ isOpen, onClose, logData }) => {
               {logData.action}
             </h2>
             <p className="text-[12px] font-medium text-gray-400">
-              Submitted Date: {logData.date.split(' ')[0]} May 2026 {/* Mock formatting */}
+              Submitted Date: {formatTimestamp(logData.timestamp)}
             </p>
           </div>
           <button 
@@ -56,41 +63,43 @@ const AuditLogDetailsDrawer = ({ isOpen, onClose, logData }) => {
           <h3 className="text-[12px] font-bold text-[#1e293b] mb-6">Event Details</h3>
 
           <div className="flex flex-col gap-5">
-            {logData.reference && (
-              <div className="flex justify-between items-center">
-                <span className="text-[13px] font-medium text-gray-500">Reference</span>
-                <span className="text-[13px] font-bold text-[#1e293b]">{logData.reference}</span>
+            {logData.reference_id && (
+              <div className="flex justify-between items-center border-b border-gray-50 pb-4">
+                <span className="text-[13px] font-medium text-gray-500">Reference ID</span>
+                <span className="text-[13px] font-bold text-[#1e293b]">{logData.reference_id}</span>
               </div>
             )}
             
-            {/* Mocking additional data fields for demonstration as per Figma */}
-            {logData.category === 'Payment' && (
-              <>
-                <div className="flex justify-between items-center">
-                  <span className="text-[13px] font-medium text-gray-500">Amount</span>
-                  <span className="text-[13px] font-bold text-[#1e293b]">GHS 450</span>
-                </div>
-                <div className="flex justify-between items-center">
-                  <span className="text-[13px] font-medium text-gray-500">Payment method</span>
-                  <span className="text-[13px] font-bold text-[#1e293b]">MTN MoMo</span>
-                </div>
-              </>
-            )}
-
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center border-b border-gray-50 pb-4">
               <span className="text-[13px] font-medium text-gray-500">Category</span>
               <div>{getCategoryBadge(logData.category)}</div>
             </div>
 
-            <div className="flex justify-between items-center">
-              <span className="text-[13px] font-medium text-gray-500">Transaction ID</span>
-              <span className="text-[13px] font-bold text-[#1e293b]">EPY-928374</span>
+            <div className="flex justify-between items-center border-b border-gray-50 pb-4">
+              <span className="text-[13px] font-medium text-gray-500">Actor Name</span>
+              <span className="text-[13px] font-bold text-[#1e293b]">{logData.actor_name || 'System'}</span>
             </div>
 
-            <div className="flex justify-between items-center">
-              <span className="text-[13px] font-medium text-gray-500">IP address</span>
-              <span className="text-[13px] font-bold text-[#1e293b]">192.168.1.1</span>
+            {logData.actor_id && (
+              <div className="flex justify-between items-center border-b border-gray-50 pb-4">
+                <span className="text-[13px] font-medium text-gray-500">Actor ID</span>
+                <span className="text-[10px] font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded">{logData.actor_id}</span>
+              </div>
+            )}
+
+            <div className="flex justify-between items-center border-b border-gray-50 pb-4">
+              <span className="text-[13px] font-medium text-gray-500">Log ID</span>
+              <span className="text-[10px] font-bold text-gray-400 bg-gray-50 px-2 py-1 rounded">{logData.id}</span>
             </div>
+
+            {logData.metadata && Object.keys(logData.metadata).length > 0 && (
+              <div className="flex flex-col gap-2 pt-2">
+                <span className="text-[13px] font-medium text-gray-500">Additional Metadata</span>
+                <pre className="text-[11px] font-medium text-gray-600 bg-gray-50 p-4 rounded-lg overflow-x-auto border border-gray-100">
+                  {JSON.stringify(logData.metadata, null, 2)}
+                </pre>
+              </div>
+            )}
             
           </div>
         </div>
