@@ -1,7 +1,12 @@
-import React from 'react';
-import { X, Download, FileText } from 'lucide-react';
+import React, { useState } from 'react';
+import { X, Download, FileText, Send, Loader2 } from 'lucide-react';
+import { supabase } from '../../../supabaseClient';
+import { useAuth } from '../../../context/AuthContext';
 
-const OfficerApplicationDrawer = ({ application, onClose }) => {
+const OfficerApplicationDrawer = ({ application, onClose, onRefresh }) => {
+  const { user } = useAuth();
+  const [isForwarding, setIsForwarding] = useState(false);
+
   if (!application) return null;
 
   const formatDate = (dateStr) => {
@@ -36,6 +41,52 @@ const OfficerApplicationDrawer = ({ application, onClose }) => {
   const docs = application.documents || [];
   const payment = application.payment_details || {};
   const personal = application.personal_details || {};
+
+  const handleForwardToDirector = async () => {
+    if (!user) return;
+    setIsForwarding(true);
+    try {
+      // 1. Select available director
+      const { data: directorId, error: rpcError } = await supabase.rpc('select_available_director', {
+        p_officer_id: user.id
+      });
+
+      if (rpcError) throw rpcError;
+
+      if (!directorId) {
+        alert('No available director found or limit reached. Please try again later.');
+        return;
+      }
+
+      // 2. Update application status and director
+      const { error: updateError } = await supabase
+        .from('applications')
+        .update({ 
+          status: 'Forwarded to Director',
+          assigned_director_id: directorId
+        })
+        .eq('id', application.id);
+
+      if (updateError) throw updateError;
+
+      // 3. Log history
+      await supabase.from('application_status_history').insert({
+        application_id: application.id,
+        status: 'Forwarded to Director',
+        changed_by: user.id,
+        comments: 'Auto-forwarded to available director'
+      });
+
+      alert('Application forwarded successfully.');
+      onRefresh?.();
+      onClose();
+    } catch (err) {
+      console.error('Error forwarding:', err);
+      alert('Failed to forward application: ' + err.message);
+    } finally {
+      setIsForwarding(false);
+    }
+  };
 
   return (
     <>
@@ -132,10 +183,22 @@ const OfficerApplicationDrawer = ({ application, onClose }) => {
         {/* Footer Actions */}
         <div className="p-6 border-t border-gray-100 flex items-center justify-end gap-3 bg-white shrink-0">
           <button className="px-5 h-11 border border-red-200 text-red-600 font-bold text-sm rounded-lg hover:bg-red-50 transition-colors">
-            Reject submission
+            Reject
           </button>
+          
+          {application.status === 'Pending review' && (
+            <button 
+              onClick={handleForwardToDirector}
+              disabled={isForwarding}
+              className="px-5 h-11 bg-[#fef3c7] text-[#b45309] font-bold text-sm rounded-lg hover:bg-[#fde68a] transition-colors shadow-sm flex items-center gap-2"
+            >
+              {isForwarding ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              Forward to Director
+            </button>
+          )}
+
           <button className="px-5 h-11 bg-[#0a1b35] text-white font-bold text-sm rounded-lg hover:bg-[#122b50] transition-colors shadow-sm">
-            Check-in
+            Approve Check-in
           </button>
         </div>
       </div>

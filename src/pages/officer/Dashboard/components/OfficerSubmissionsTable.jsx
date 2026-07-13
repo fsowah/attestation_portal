@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Filter, Download, MoreHorizontal, Loader2 } from 'lucide-react';
 import OfficerApplicationDrawer from './OfficerApplicationDrawer';
 
-const OfficerSubmissionsTable = ({ applications = [], isLoading = false }) => {
+const OfficerSubmissionsTable = ({ applications = [], isLoading = false, onRefresh }) => {
   const [activeTab, setActiveTab] = useState('All');
   const [selectedApp, setSelectedApp] = useState(null);
   
@@ -167,7 +167,7 @@ const OfficerSubmissionsTable = ({ applications = [], isLoading = false }) => {
         </div>
       </div>
 
-      <OfficerApplicationDrawer application={selectedApp} onClose={() => setSelectedApp(null)} />
+      <OfficerApplicationDrawer application={selectedApp} onClose={() => setSelectedApp(null)} onRefresh={onRefresh} />
     </div>
   );
 };
