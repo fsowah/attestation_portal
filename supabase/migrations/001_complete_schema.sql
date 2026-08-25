@@ -111,8 +111,8 @@ CREATE TABLE IF NOT EXISTS fees_config (
 CREATE TABLE IF NOT EXISTS sms_templates (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   event_type TEXT NOT NULL UNIQUE,
-  template_text TEXT NOT NULL,
-  is_enabled BOOLEAN DEFAULT true,
+  message_template TEXT NOT NULL,
+  is_active BOOLEAN DEFAULT true,
   updated_by UUID REFERENCES auth.users(id),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
@@ -121,8 +121,11 @@ CREATE TABLE IF NOT EXISTS sms_templates (
 -- 9. CREATE portal_settings TABLE
 -- ─────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS portal_settings (
+  id UUID DEFAULT gen_random_uuid(),
   key TEXT PRIMARY KEY,
   value JSONB NOT NULL,
+  category TEXT NOT NULL DEFAULT 'General',
+  description TEXT,
   updated_by UUID REFERENCES auth.users(id),
   updated_at TIMESTAMPTZ DEFAULT now()
 );
@@ -159,53 +162,79 @@ CREATE INDEX IF NOT EXISTS idx_profiles_role ON profiles(role);
 
 -- appointment_slots: anyone can read, admin can write
 ALTER TABLE appointment_slots ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "Anyone can read appointment_slots" ON appointment_slots FOR SELECT USING (true);
-CREATE POLICY IF NOT EXISTS "Admin can insert appointment_slots" ON appointment_slots FOR INSERT WITH CHECK (true);
-CREATE POLICY IF NOT EXISTS "Admin can update appointment_slots" ON appointment_slots FOR UPDATE USING (true);
-CREATE POLICY IF NOT EXISTS "Admin can delete appointment_slots" ON appointment_slots FOR DELETE USING (true);
+DROP POLICY IF EXISTS "Anyone can read appointment_slots" ON appointment_slots;
+CREATE POLICY "Anyone can read appointment_slots" ON appointment_slots FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Admin can insert appointment_slots" ON appointment_slots;
+CREATE POLICY "Admin can insert appointment_slots" ON appointment_slots FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Admin can update appointment_slots" ON appointment_slots;
+CREATE POLICY "Admin can update appointment_slots" ON appointment_slots FOR UPDATE USING (true);
+DROP POLICY IF EXISTS "Admin can delete appointment_slots" ON appointment_slots;
+CREATE POLICY "Admin can delete appointment_slots" ON appointment_slots FOR DELETE USING (true);
 
 -- blackout_dates: anyone can read, admin can write
 ALTER TABLE blackout_dates ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "Anyone can read blackout_dates" ON blackout_dates FOR SELECT USING (true);
-CREATE POLICY IF NOT EXISTS "Admin can insert blackout_dates" ON blackout_dates FOR INSERT WITH CHECK (true);
-CREATE POLICY IF NOT EXISTS "Admin can update blackout_dates" ON blackout_dates FOR UPDATE USING (true);
-CREATE POLICY IF NOT EXISTS "Admin can delete blackout_dates" ON blackout_dates FOR DELETE USING (true);
+DROP POLICY IF EXISTS "Anyone can read blackout_dates" ON blackout_dates;
+CREATE POLICY "Anyone can read blackout_dates" ON blackout_dates FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Admin can insert blackout_dates" ON blackout_dates;
+CREATE POLICY "Admin can insert blackout_dates" ON blackout_dates FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Admin can update blackout_dates" ON blackout_dates;
+CREATE POLICY "Admin can update blackout_dates" ON blackout_dates FOR UPDATE USING (true);
+DROP POLICY IF EXISTS "Admin can delete blackout_dates" ON blackout_dates;
+CREATE POLICY "Admin can delete blackout_dates" ON blackout_dates FOR DELETE USING (true);
 
 -- audit_logs: admin/officer can read, system can write
 ALTER TABLE audit_logs ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "Staff can read audit_logs" ON audit_logs FOR SELECT USING (true);
-CREATE POLICY IF NOT EXISTS "System can insert audit_logs" ON audit_logs FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Staff can read audit_logs" ON audit_logs;
+CREATE POLICY "Staff can read audit_logs" ON audit_logs FOR SELECT USING (true);
+DROP POLICY IF EXISTS "System can insert audit_logs" ON audit_logs;
+CREATE POLICY "System can insert audit_logs" ON audit_logs FOR INSERT WITH CHECK (true);
 
 -- fees_config: anyone can read, admin can write
 ALTER TABLE fees_config ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "Anyone can read fees_config" ON fees_config FOR SELECT USING (true);
-CREATE POLICY IF NOT EXISTS "Admin can insert fees_config" ON fees_config FOR INSERT WITH CHECK (true);
-CREATE POLICY IF NOT EXISTS "Admin can update fees_config" ON fees_config FOR UPDATE USING (true);
+DROP POLICY IF EXISTS "Anyone can read fees_config" ON fees_config;
+CREATE POLICY "Anyone can read fees_config" ON fees_config FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Admin can insert fees_config" ON fees_config;
+CREATE POLICY "Admin can insert fees_config" ON fees_config FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Admin can update fees_config" ON fees_config;
+CREATE POLICY "Admin can update fees_config" ON fees_config FOR UPDATE USING (true);
 
 -- sms_templates: admin can read/write
 ALTER TABLE sms_templates ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "Admin can read sms_templates" ON sms_templates FOR SELECT USING (true);
-CREATE POLICY IF NOT EXISTS "Admin can insert sms_templates" ON sms_templates FOR INSERT WITH CHECK (true);
-CREATE POLICY IF NOT EXISTS "Admin can update sms_templates" ON sms_templates FOR UPDATE USING (true);
+DROP POLICY IF EXISTS "Admin can read sms_templates" ON sms_templates;
+CREATE POLICY "Admin can read sms_templates" ON sms_templates FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Admin can insert sms_templates" ON sms_templates;
+CREATE POLICY "Admin can insert sms_templates" ON sms_templates FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Admin can update sms_templates" ON sms_templates;
+CREATE POLICY "Admin can update sms_templates" ON sms_templates FOR UPDATE USING (true);
 
 -- portal_settings: anyone can read, admin can write
 ALTER TABLE portal_settings ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "Anyone can read portal_settings" ON portal_settings FOR SELECT USING (true);
-CREATE POLICY IF NOT EXISTS "Admin can insert portal_settings" ON portal_settings FOR INSERT WITH CHECK (true);
-CREATE POLICY IF NOT EXISTS "Admin can update portal_settings" ON portal_settings FOR UPDATE USING (true);
+DROP POLICY IF EXISTS "Anyone can read portal_settings" ON portal_settings;
+CREATE POLICY "Anyone can read portal_settings" ON portal_settings FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Admin can insert portal_settings" ON portal_settings;
+CREATE POLICY "Admin can insert portal_settings" ON portal_settings FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Admin can update portal_settings" ON portal_settings;
+CREATE POLICY "Admin can update portal_settings" ON portal_settings FOR UPDATE USING (true);
 
 -- support_tickets
 ALTER TABLE support_tickets ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "Staff can read support_tickets" ON support_tickets FOR SELECT USING (true);
-CREATE POLICY IF NOT EXISTS "Staff can insert support_tickets" ON support_tickets FOR INSERT WITH CHECK (true);
-CREATE POLICY IF NOT EXISTS "Staff can update support_tickets" ON support_tickets FOR UPDATE USING (true);
+DROP POLICY IF EXISTS "Staff can read support_tickets" ON support_tickets;
+CREATE POLICY "Staff can read support_tickets" ON support_tickets FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Staff can insert support_tickets" ON support_tickets;
+CREATE POLICY "Staff can insert support_tickets" ON support_tickets FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Staff can update support_tickets" ON support_tickets;
+CREATE POLICY "Staff can update support_tickets" ON support_tickets FOR UPDATE USING (true);
 
 -- roles_permissions
 ALTER TABLE roles_permissions ENABLE ROW LEVEL SECURITY;
-CREATE POLICY IF NOT EXISTS "Anyone can read roles_permissions" ON roles_permissions FOR SELECT USING (true);
-CREATE POLICY IF NOT EXISTS "Admin can insert roles_permissions" ON roles_permissions FOR INSERT WITH CHECK (true);
-CREATE POLICY IF NOT EXISTS "Admin can update roles_permissions" ON roles_permissions FOR UPDATE USING (true);
-CREATE POLICY IF NOT EXISTS "Admin can delete roles_permissions" ON roles_permissions FOR DELETE USING (true);
+DROP POLICY IF EXISTS "Anyone can read roles_permissions" ON roles_permissions;
+CREATE POLICY "Anyone can read roles_permissions" ON roles_permissions FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Admin can insert roles_permissions" ON roles_permissions;
+CREATE POLICY "Admin can insert roles_permissions" ON roles_permissions FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Admin can update roles_permissions" ON roles_permissions;
+CREATE POLICY "Admin can update roles_permissions" ON roles_permissions FOR UPDATE USING (true);
+DROP POLICY IF EXISTS "Admin can delete roles_permissions" ON roles_permissions;
+CREATE POLICY "Admin can delete roles_permissions" ON roles_permissions FOR DELETE USING (true);
 
 -- ─────────────────────────────────────────────────────
 -- 13. SEED DATA — Fees
@@ -274,7 +303,7 @@ ON CONFLICT (role, module, permission_name) DO NOTHING;
 -- ─────────────────────────────────────────────────────
 -- 15. SEED DATA — SMS Templates
 -- ─────────────────────────────────────────────────────
-INSERT INTO sms_templates (event_type, template_text, is_enabled)
+INSERT INTO sms_templates (event_type, message_template, is_active)
 VALUES
   ('application_submitted', 'Dear {name}, your attestation application {app_id} has been received. You will be notified of your appointment details.', true),
   ('appointment_reminder', 'Reminder: Your attestation appointment is scheduled for {date} at {time}. Please arrive 15 minutes early.', true),

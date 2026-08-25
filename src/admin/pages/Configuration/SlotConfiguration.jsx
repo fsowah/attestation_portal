@@ -14,6 +14,14 @@ const SlotConfiguration = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [weekOffset, setWeekOffset] = useState(0);
   const [monthOffset, setMonthOffset] = useState(0);
+  const [initialAddDate, setInitialAddDate] = useState(null);
+  const [initialAddTime, setInitialAddTime] = useState(null);
+  const [toast, setToast] = useState(null);
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 3000);
+  };
 
   // Calculate date ranges
   const getWeekRange = useCallback(() => {
@@ -21,9 +29,11 @@ const SlotConfiguration = () => {
     const dayOfWeek = today.getDay();
     const diffToMon = dayOfWeek === 0 ? -6 : 1 - dayOfWeek;
     const monday = new Date(today);
+    monday.setHours(0, 0, 0, 0);
     monday.setDate(today.getDate() + diffToMon + weekOffset * 7);
     const friday = new Date(monday);
     friday.setDate(monday.getDate() + 4);
+    friday.setHours(23, 59, 59, 999);
     return { start: monday, end: friday };
   }, [weekOffset]);
 
@@ -88,19 +98,16 @@ const SlotConfiguration = () => {
   // Transform DB slots into the format WeekView expects
   const dayLabels = ['Mon', 'Tue', 'Wed', 'Thur', 'Fri'];
   const getWeekSlots = () => {
-    const range = getWeekRange();
+    const weekDays = getWeekDays();
     const weekSlots = [];
 
     slots.forEach(slot => {
-      const slotDate = new Date(slot.date + 'T00:00:00');
-      const dayIdx = Math.round((slotDate - range.start) / (1000 * 60 * 60 * 24));
-      if (dayIdx < 0 || dayIdx > 4) return;
-      const dayNum = slotDate.getDate();
-      const dayLabel = `${dayLabels[dayIdx]} ${dayNum}`;
+      const dayObj = weekDays.find(d => d.date === slot.date);
+      if (!dayObj) return;
 
       weekSlots.push({
         id: slot.id,
-        day: dayLabel,
+        day: dayObj.label,
         time: slot.time,
         cap: slot.capacity,
         status: slot.is_available ? 'open' : 'blackout',
@@ -112,16 +119,14 @@ const SlotConfiguration = () => {
     });
 
     // Add blackout placeholders for dates with no slots
-    for (let i = 0; i < 5; i++) {
-      const d = new Date(range.start);
-      d.setDate(range.start.getDate() + i);
-      const dateStr = formatDate(d);
+    weekDays.forEach((dayObj) => {
+      const dateStr = dayObj.date;
       if (blackoutDates.includes(dateStr)) {
         const hasSlotForDay = weekSlots.some(s => s.date === dateStr);
         if (!hasSlotForDay) {
           weekSlots.push({
             id: `blackout-${dateStr}`,
-            day: `${dayLabels[i]} ${d.getDate()}`,
+            day: dayObj.label,
             time: '9:00 AM',
             status: 'blackout',
             note: 'Blackout date',
@@ -129,7 +134,7 @@ const SlotConfiguration = () => {
           });
         }
       }
-    }
+    });
 
     return weekSlots;
   };
@@ -138,9 +143,9 @@ const SlotConfiguration = () => {
   const getMonthSlots = () => {
     const grouped = {};
     slots.forEach(slot => {
-      const day = new Date(slot.date + 'T00:00:00').getDate();
-      if (!grouped[day]) grouped[day] = [];
-      grouped[day].push({
+      const dateStr = slot.date;
+      if (!grouped[dateStr]) grouped[dateStr] = [];
+      grouped[dateStr].push({
         time: slot.time,
         status: slot.is_available ? 'open' : 'blackout',
         id: slot.id,
@@ -148,18 +153,73 @@ const SlotConfiguration = () => {
       });
     });
 
-    return Object.entries(grouped).map(([date, daySlots]) => {
+    return Object.entries(grouped).map(([dateStr, daySlots]) => {
       const extra = daySlots.length > 3 ? `+${daySlots.length - 3}` : undefined;
       return {
-        date: parseInt(date),
+        dateStr,
         slots: daySlots.slice(0, 3),
         extra
       };
     });
   };
 
-  const handleAddSlot = () => {
+  const getWeekDays = () => {
+    const range = getWeekRange();
+    const days = [];
+    for (let i = 0; i < 5; i++) {
+      const d = new Date(range.start);
+      d.setDate(range.start.getDate() + i);
+      const dayLabel = `${dayLabels[i]} ${d.getDate()}`;
+      days.push({
+        label: dayLabel,
+        date: formatDate(d)
+      });
+    }
+    return days;
+  };
+
+  const getMonthGrid = () => {
+    const range = getMonthRange();
+    const firstDay = range.start.getDay();
+    let startOffset = firstDay === 0 ? 6 : firstDay - 1;
+
+    const grid = [];
+    const prevMonthLastDate = new Date(range.start);
+    prevMonthLastDate.setDate(0);
+    for (let i = startOffset - 1; i >= 0; i--) {
+      grid.push({
+        dateStr: formatDate(new Date(prevMonthLastDate.getFullYear(), prevMonthLastDate.getMonth(), prevMonthLastDate.getDate() - i)),
+        date: prevMonthLastDate.getDate() - i,
+        currentMonth: false
+      });
+    }
+
+    const daysInMonth = range.end.getDate();
+    for (let i = 1; i <= daysInMonth; i++) {
+      grid.push({
+        dateStr: formatDate(new Date(range.start.getFullYear(), range.start.getMonth(), i)),
+        date: i,
+        currentMonth: true
+      });
+    }
+
+    let nextMonthDay = 1;
+    while (grid.length % 7 !== 0) {
+      grid.push({
+        dateStr: formatDate(new Date(range.end.getFullYear(), range.end.getMonth() + 1, nextMonthDay)),
+        date: nextMonthDay,
+        currentMonth: false
+      });
+      nextMonthDay++;
+    }
+
+    return grid;
+  };
+
+  const handleAddSlot = (initialDate = null, initialTime = null) => {
     setSelectedSlot(null);
+    setInitialAddDate(typeof initialDate === 'string' ? initialDate : null);
+    setInitialAddTime(typeof initialTime === 'string' ? initialTime : null);
     setDrawerOpen(true);
   };
 
@@ -176,6 +236,7 @@ const SlotConfiguration = () => {
   const handleSlotSaved = () => {
     handleDrawerClose();
     fetchSlots();
+    showToast('Slot configuration saved successfully!');
   };
 
   // Date range labels
@@ -275,9 +336,9 @@ const SlotConfiguration = () => {
           <>
             {/* Dynamic View Rendering */}
             {view === 'Week' ? (
-              <WeekView slots={getWeekSlots()} onSlotClick={handleEditSlot} onEmptyClick={handleAddSlot} />
+              <WeekView slots={getWeekSlots()} days={getWeekDays()} onSlotClick={handleEditSlot} onEmptyClick={handleAddSlot} />
             ) : (
-              <MonthView slots={getMonthSlots()} onSlotClick={handleEditSlot} onEmptyClick={handleAddSlot} />
+              <MonthView slots={getMonthSlots()} calendarGrid={getMonthGrid()} onSlotClick={handleEditSlot} onEmptyClick={handleAddSlot} />
             )}
           </>
         )}
@@ -289,7 +350,17 @@ const SlotConfiguration = () => {
         onClose={handleDrawerClose} 
         slotData={selectedSlot}
         onSaved={handleSlotSaved}
+        initialAddDate={initialAddDate}
+        initialAddTime={initialAddTime}
       />
+
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`fixed bottom-6 right-6 z-[100] flex items-center gap-3 px-5 py-3 rounded-xl shadow-xl text-[14px] font-bold animate-in fade-in slide-in-from-bottom-4 duration-300 ${toast.type === 'success' ? 'bg-[#f0fdf4] text-[#15803d] border border-[#bbf7d0]' : 'bg-[#fef2f2] text-[#b91c1c] border border-[#fecaca]'}`}>
+          <div className={`w-2 h-2 rounded-full ${toast.type === 'success' ? 'bg-green-500' : 'bg-red-500'}`}></div>
+          {toast.message}
+        </div>
+      )}
     </div>
   );
 };

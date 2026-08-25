@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, ChevronDown, Calendar as CalendarIcon, Clock, AlertTriangle, ChevronUp, Plus, Loader2, Trash2 } from 'lucide-react';
 import { supabase } from '../../../../supabaseClient';
 
-const EditSlotDrawer = ({ isOpen, onClose, slotData, onSaved }) => {
+const EditSlotDrawer = ({ isOpen, onClose, slotData, onSaved, initialAddDate, initialAddTime }) => {
   const isEditMode = !!slotData;
 
   // Add mode state
@@ -18,6 +18,8 @@ const EditSlotDrawer = ({ isOpen, onClose, slotData, onSaved }) => {
   const [standardEnabled, setStandardEnabled] = useState(true);
 
   // Edit mode state
+  const [editDate, setEditDate] = useState('');
+  const [editTime, setEditTime] = useState('');
   const [editCapacity, setEditCapacity] = useState(5);
   const [editTier, setEditTier] = useState('Standard + Express');
   const [editAvailable, setEditAvailable] = useState(true);
@@ -35,24 +37,26 @@ const EditSlotDrawer = ({ isOpen, onClose, slotData, onSaved }) => {
   // Populate edit state when slotData changes
   useEffect(() => {
     if (slotData) {
+      setEditDate(slotData.date || '');
+      setEditTime(slotData.time || '');
       setEditCapacity(slotData.capacity || 5);
       setEditTier(slotData.tier || 'Standard + Express');
       setEditAvailable(slotData.is_available !== false);
     } else {
       // Reset add state
-      setAddDate('');
-      setAddSlots([{ time: '9:00 AM', capacity: 5 }]);
+      setAddDate(initialAddDate || '');
+      setAddSlots([{ time: initialAddTime || '9:00 AM', capacity: 5 }]);
       setAddTier('Standard + Express');
       setAddNote('');
       setSelectedDays([]);
       setRepeatType('none');
-      setFromDate('');
-      setToDate('');
+      setFromDate(initialAddDate || '');
+      setToDate(initialAddDate || '');
       setExpressEnabled(true);
       setStandardEnabled(true);
     }
     setError(null);
-  }, [slotData, isOpen]);
+  }, [slotData, isOpen, initialAddDate, initialAddTime]);
 
   const computeTier = () => {
     if (expressEnabled && standardEnabled) return 'Standard + Express';
@@ -79,14 +83,21 @@ const EditSlotDrawer = ({ isOpen, onClose, slotData, onSaved }) => {
     );
   };
 
+  // Helper to safely parse local date from YYYY-MM-DD
+  const parseLocalDate = (dateStr) => {
+    if (!dateStr) return new Date();
+    const [y, m, d] = dateStr.split('-');
+    return new Date(y, m - 1, d);
+  };
+
   // Generate dates for the selected days within from-to range
   const generateDates = () => {
     if (!fromDate || !toDate) return [fromDate || addDate].filter(Boolean);
     
     const dates = [];
     const dayMap = { 'Mon': 1, 'Tue': 2, 'Wed': 3, 'Thu': 4, 'Fri': 5 };
-    const start = new Date(fromDate);
-    const end = new Date(toDate);
+    const start = parseLocalDate(fromDate);
+    const end = parseLocalDate(toDate);
     
     for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
       const jsDay = d.getDay(); // 0=Sun, 1=Mon, ...
@@ -111,7 +122,11 @@ const EditSlotDrawer = ({ isOpen, onClose, slotData, onSaved }) => {
       const dates = generateDates();
 
       if (dates.length === 0) {
-        setError('Please select at least one date.');
+        if (selectedDays.length > 0) {
+          setError(`None of the selected days (${selectedDays.join(', ')}) fall within the given date range. Please adjust the range or unselect the days.`);
+        } else {
+          setError('Please select at least one valid weekday date in the range.');
+        }
         setIsSaving(false);
         return;
       }
@@ -158,17 +173,33 @@ const EditSlotDrawer = ({ isOpen, onClose, slotData, onSaved }) => {
     setIsSaving(true);
     setError(null);
     try {
-      const { error: updateError } = await supabase
-        .from('appointment_slots')
-        .update({
-          capacity: parseInt(editCapacity) || 5,
-          tier: editTier,
-          is_available: editAvailable,
-          updated_at: new Date().toISOString(),
-        })
-        .eq('id', slotData.id);
+      // Check if it's a blackout placeholder, meaning it doesn't exist yet
+      if (String(slotData.id).startsWith('blackout-')) {
+        const { error: insertError } = await supabase
+          .from('appointment_slots')
+          .insert({
+            date: editDate,
+            time: editTime,
+            capacity: parseInt(editCapacity) || 5,
+            tier: editTier,
+            is_available: editAvailable,
+          });
 
-      if (updateError) throw updateError;
+        if (insertError) throw insertError;
+      } else {
+        const { error: updateError } = await supabase
+          .from('appointment_slots')
+          .update({
+            date: editDate,
+            time: editTime,
+            capacity: parseInt(editCapacity) || 5,
+            tier: editTier,
+            is_available: editAvailable,
+          })
+          .eq('id', slotData.id);
+
+        if (updateError) throw updateError;
+      }
 
       onSaved?.();
     } catch (err) {
@@ -223,7 +254,7 @@ const EditSlotDrawer = ({ isOpen, onClose, slotData, onSaved }) => {
             </h2>
             <p className="text-[13px] font-medium text-gray-400">
               {isEditMode 
-                ? `Date: ${slotData?.date}  ${slotData?.time}`
+                ? `Date: ${editDate}  ${editTime}`
                 : 'Create new appointment slots'
               }
             </p>
@@ -253,6 +284,31 @@ const EditSlotDrawer = ({ isOpen, onClose, slotData, onSaved }) => {
                 <h3 className="text-[12px] font-bold text-[#1e293b] mb-4">Slot Details</h3>
 
                 <div className="flex flex-col gap-4">
+                  <div className="flex gap-4">
+                    <div className="flex-1">
+                      <label className="block text-[10px] font-bold text-gray-700 uppercase mb-2">Date</label>
+                      <input 
+                        type="date"
+                        value={editDate} 
+                        onChange={e => setEditDate(e.target.value)}
+                        className="w-full bg-white border border-gray-200 rounded-lg px-3 py-2 h-[40px] text-[13px] font-medium text-[#1e293b] focus:outline-none" 
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="block text-[10px] font-bold text-gray-700 uppercase mb-2">Time</label>
+                      <div className="relative">
+                        <select 
+                          value={editTime} 
+                          onChange={e => setEditTime(e.target.value)}
+                          className="w-full appearance-none bg-white border border-gray-200 rounded-lg px-3 py-2 h-[40px] text-[13px] font-medium text-[#1e293b] focus:outline-none"
+                        >
+                          {timeOptions.map(t => <option key={t} value={t}>{t}</option>)}
+                        </select>
+                        <ChevronDown className="w-4 h-4 text-gray-400 absolute right-3 top-3 pointer-events-none" />
+                      </div>
+                    </div>
+                  </div>
+
                   <div>
                     <label className="block text-[10px] font-bold text-gray-700 uppercase mb-2">Capacity</label>
                     <div className="flex items-center border border-gray-200 rounded-lg h-[40px] w-[100px] bg-white overflow-hidden">

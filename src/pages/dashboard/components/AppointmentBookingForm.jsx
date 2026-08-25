@@ -1,36 +1,69 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar as CalendarIcon, Clock, ChevronLeft, ChevronRight, CheckCircle, Loader2, AlertCircle } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, ChevronLeft, ChevronRight, CheckCircle, Loader2, AlertCircle, RefreshCw } from 'lucide-react';
 import { supabase } from '../../../supabaseClient';
 
-const AppointmentBookingForm = ({ onSave, onProgressUpdate, initialData }) => {
+const AppointmentBookingForm = ({ onSave, onProgressUpdate, initialData, serviceTier }) => {
   const [selectedDate, setSelectedDate] = useState(initialData?.date || '');
   const [selectedSlot, setSelectedSlot] = useState(initialData ? { time: initialData.time, id: initialData.id } : null);
   const [availableSlots, setAvailableSlots] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState(null);
   
   const [availableDates, setAvailableDates] = useState(new Set());
+  const [debugInfo, setDebugInfo] = useState('');
   const [currentMonth, setCurrentMonth] = useState(initialData?.date ? new Date(initialData.date) : new Date());
+  const [isInitialLoadDone, setIsInitialLoadDone] = useState(false);
+
+  const fetchAllAvailableDates = async () => {
+    setIsRefreshing(true);
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      let query = supabase
+        .from('appointment_slots')
+        .select('date')
+        .gte('date', today)
+        .eq('is_available', true);
+        
+      if (serviceTier === 'Express') {
+        query = query.in('tier', ['Express only', 'Standard + Express']);
+      } else if (serviceTier === 'Standard') {
+        query = query.in('tier', ['Standard only', 'Standard + Express']);
+      }
+
+      const { data, error } = await query;
+        
+      setDebugInfo(`Err: ${error ? JSON.stringify(error) : 'null'} | Data length: ${data ? data.length : 'null'}`);
+        
+      if (!error && data) {
+         setAvailableDates(new Set(data.map(d => d.date)));
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsRefreshing(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchAllAvailableDates = async () => {
-      try {
-        const today = new Date().toISOString().split('T')[0];
-        const { data, error } = await supabase
-          .from('appointment_slots')
-          .select('date')
-          .gte('date', today)
-          .eq('is_available', true);
-          
-        if (!error && data) {
-           setAvailableDates(new Set(data.map(d => d.date)));
-        }
-      } catch (e) {
-        console.error(e);
-      }
+    const init = async () => {
+      await fetchAllAvailableDates();
+      setIsInitialLoadDone(true);
     };
-    fetchAllAvailableDates();
-  }, []);
+    init();
+
+    // Subscribe to real-time updates for appointment_slots
+    const channel = supabase
+      .channel('public:appointment_slots')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'appointment_slots' }, () => {
+        fetchAllAvailableDates();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [serviceTier]);
 
   // Calculate progress
   useEffect(() => {
@@ -44,21 +77,29 @@ const AppointmentBookingForm = ({ onSave, onProgressUpdate, initialData }) => {
   }, [selectedDate, selectedSlot, onProgressUpdate]);
 
   useEffect(() => {
-    if (selectedDate) {
+    if (selectedDate && isInitialLoadDone) {
       fetchAvailableSlots();
     }
-  }, [selectedDate]);
+  }, [selectedDate, isInitialLoadDone]);
 
   const fetchAvailableSlots = async () => {
     setIsLoading(true);
     setError(null);
     try {
       // 1. Fetch available slots for the date
-      const { data: slots, error: slotError } = await supabase
+      let query = supabase
         .from('appointment_slots')
         .select('*')
         .eq('date', selectedDate)
         .eq('is_available', true);
+
+      if (serviceTier === 'Express') {
+        query = query.in('tier', ['Express only', 'Standard + Express']);
+      } else if (serviceTier === 'Standard') {
+        query = query.in('tier', ['Standard only', 'Standard + Express']);
+      }
+
+      const { data: slots, error: slotError } = await query;
 
       if (slotError) {
         console.error('Slot fetch error:', slotError);
@@ -162,7 +203,19 @@ const AppointmentBookingForm = ({ onSave, onProgressUpdate, initialData }) => {
         <div className="flex flex-col gap-6">
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between mb-2">
-              <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Select Date</label>
+              <div className="flex items-center gap-2">
+                <label className="text-[10px] font-bold text-neutral-400 uppercase tracking-wider">Select Date</label>
+                <button 
+                  onClick={() => {
+                    fetchAllAvailableDates();
+                    if (selectedDate) fetchAvailableSlots();
+                  }} 
+                  className={`text-brand-gold-500 hover:text-brand-gold-600 transition-all ${isRefreshing ? 'animate-spin' : ''}`}
+                  title="Refresh Slots"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                </button>
+              </div>
               <div className="flex items-center gap-2">
                 <button onClick={handlePrevMonth} className="p-1 rounded bg-neutral-100 hover:bg-neutral-200 transition-all"><ChevronLeft className="w-4 h-4" /></button>
                 <span className="text-sm font-black text-brand-navy-800 min-w-[120px] text-center">
@@ -211,6 +264,11 @@ const AppointmentBookingForm = ({ onSave, onProgressUpdate, initialData }) => {
                 })}
               </div>
             </div>
+            
+      {/* DEBUG VIEWER */}
+      <div className="text-[10px] text-red-500 font-mono mt-2 break-all">
+        DEBUG availableDates: {Array.from(availableDates).join(', ')} | today: {new Date().toISOString().split('T')[0]} | timezone: {new Date().getTimezoneOffset()} | debug: {debugInfo}
+      </div>
           </div>
 
           <div className="p-6 bg-brand-navy-800 rounded-2xl text-white relative overflow-hidden">

@@ -356,6 +356,7 @@ const NewApplicationSteps = ({ onBack, onTrack }) => {
                         initialData={applicationData.appointment}
                         onSave={handleSaveStep4}
                         onProgressUpdate={setStep4Progress}
+                        serviceTier={applicationData.serviceTier}
                       />
                     )}
                   </div>

@@ -1,31 +1,12 @@
 import React from 'react';
 
-const MonthView = ({ slots, onSlotClick, onEmptyClick }) => {
+const MonthView = ({ slots, calendarGrid, onSlotClick, onEmptyClick }) => {
   const daysOfWeek = ['Mon', 'Tue', 'Wed', 'Thur', 'Fri', 'Sat', 'Sun'];
 
   // Helper to get slots for a specific date
-  const getSlotsForDate = (date) => {
-    return slots.find(s => s.date === date);
+  const getSlotsForDate = (dateStr) => {
+    return slots.find(s => s.dateStr === dateStr);
   };
-
-  // Generate calendar grid for May 2026 (starts on Friday 1st)
-  // Let's mock a standard 31-day grid with empty slots at the start
-  const generateGrid = () => {
-    const grid = [];
-    // Padding for days before May 1st
-    grid.push({ date: 27, currentMonth: false });
-    grid.push({ date: 28, currentMonth: false });
-    grid.push({ date: 29, currentMonth: false });
-    grid.push({ date: 30, currentMonth: false });
-    
-    // May days
-    for (let i = 1; i <= 31; i++) {
-      grid.push({ date: i, currentMonth: true });
-    }
-    return grid;
-  };
-
-  const calendarGrid = generateGrid();
 
   return (
     <div className="w-full">
@@ -41,7 +22,7 @@ const MonthView = ({ slots, onSlotClick, onEmptyClick }) => {
       {/* Month Grid Body */}
       <div className="grid grid-cols-7 border-t border-l border-gray-100">
         {calendarGrid.map((dayObj, idx) => {
-          const dayData = dayObj.currentMonth ? getSlotsForDate(dayObj.date) : null;
+          const dayData = dayObj.currentMonth ? getSlotsForDate(dayObj.dateStr) : null;
           const isWeekend = (idx % 7 === 5) || (idx % 7 === 6); // Sat/Sun
 
           return (
@@ -81,7 +62,7 @@ const MonthView = ({ slots, onSlotClick, onEmptyClick }) => {
                   ) : (
                     /* Empty Add slots placeholder */
                     <div 
-                      onClick={onEmptyClick}
+                      onClick={() => onEmptyClick(dayObj.dateStr)}
                       className="w-full mt-1 bg-gray-50/50 border border-gray-100 rounded-[4px] py-2 flex items-center justify-center text-[10px] font-bold text-gray-300 cursor-pointer hover:bg-gray-100 hover:text-gray-400 transition-colors"
                     >
                       + Add slots

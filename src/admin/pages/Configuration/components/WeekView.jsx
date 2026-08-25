@@ -1,9 +1,34 @@
 import React from 'react';
 import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
 
-const WeekView = ({ slots, onSlotClick, onEmptyClick }) => {
-  const days = ['Mon 18', 'Tue 19', 'Wed 20', 'Thur 21', 'Fri 22'];
-  const times = ['9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM'];
+const WeekView = ({ slots, days, onSlotClick, onEmptyClick }) => {
+  const defaultTimes = ['9:00 AM', '10:00 AM', '11:00 AM', '12:00 PM'];
+  const timeOptions = [
+    '7:00 AM', '7:30 AM', '8:00 AM', '8:30 AM', '9:00 AM', '9:30 AM',
+    '10:00 AM', '10:30 AM', '11:00 AM', '11:30 AM', '12:00 PM', '12:30 PM',
+    '1:00 PM', '1:30 PM', '2:00 PM', '2:30 PM', '3:00 PM', '3:30 PM',
+    '4:00 PM', '4:30 PM', '5:00 PM'
+  ];
+
+  // Extract unique times from existing slots (excluding auto-generated blackout placeholders without real IDs)
+  const existingTimes = slots
+    .filter(s => s.status !== 'blackout' || !s.id.toString().startsWith('blackout-'))
+    .map(s => s.time);
+
+  // Combine with default times
+  const combinedTimes = Array.from(new Set([...defaultTimes, ...existingTimes]));
+
+  // Sort chronologically using timeOptions as reference
+  combinedTimes.sort((a, b) => {
+    const idxA = timeOptions.indexOf(a);
+    const idxB = timeOptions.indexOf(b);
+    if (idxA === -1 && idxB === -1) return a.localeCompare(b);
+    if (idxA === -1) return 1;
+    if (idxB === -1) return -1;
+    return idxA - idxB;
+  });
+
+  const times = combinedTimes;
 
   // Helper to find a slot for a specific day and time
   const getSlot = (day, time) => {
@@ -21,9 +46,9 @@ const WeekView = ({ slots, onSlotClick, onEmptyClick }) => {
         </div>
         
         <div className="flex-1 grid grid-cols-5 border-l border-t border-r border-gray-100 bg-[#f8fafc] rounded-t-lg">
-          {days.map((day, idx) => (
+          {days.map((dayObj, idx) => (
             <div key={idx} className="text-center py-4 text-[13px] font-bold text-[#475569] border-r border-gray-100 last:border-r-0">
-              {day}
+              {dayObj.label}
             </div>
           ))}
         </div>
@@ -46,8 +71,8 @@ const WeekView = ({ slots, onSlotClick, onEmptyClick }) => {
 
             {/* Days Columns */}
             <div className="flex-1 grid grid-cols-5 border-l border-b border-gray-100 last:rounded-b-lg">
-              {days.map((day, colIdx) => {
-                const slot = getSlot(day, time);
+              {days.map((dayObj, colIdx) => {
+                const slot = getSlot(dayObj.label, time);
 
                 return (
                   <div key={`${rowIdx}-${colIdx}`} className="p-2 border-r border-gray-100 h-full relative group">
@@ -85,7 +110,7 @@ const WeekView = ({ slots, onSlotClick, onEmptyClick }) => {
                     ) : (
                       // Empty Add Slot Box
                       <div 
-                        onClick={onEmptyClick}
+                        onClick={() => onEmptyClick(dayObj.date, time)}
                         className="w-full h-full border-2 border-dashed border-gray-200 bg-gray-50/50 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-gray-300 hover:bg-gray-100 transition-colors min-h-[100px]"
                       >
                         <div className="flex items-center gap-2 text-[#94a3b8] font-bold text-[13px]">
