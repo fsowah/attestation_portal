@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { X, Download, FileText, Send, Loader2 } from 'lucide-react';
-import { supabase } from '../../../supabaseClient';
-import { useAuth } from '../../../context/AuthContext';
+import { supabase } from '../../../../supabaseClient';
+import { useAuth } from '../../../../context/AuthContext';
 
 const OfficerApplicationDrawer = ({ application, onClose, onRefresh }) => {
   const { user } = useAuth();

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { AlertCircle, Loader2, X, CheckCircle2 } from 'lucide-react';
+import { supabase } from '../../../../supabaseClient';
 import LogoCrest from '../../../../assets/images/Logo_crest.png';
 
 const AdminAuthSection = () => {
@@ -19,18 +20,45 @@ const AdminAuthSection = () => {
     setSuccess(false);
 
     try {
-      // Simulate network request for dummy authentication
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Authenticate with Supabase
+      const { data, error: loginError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-      // Dummy credentials for admin development testing
-      if (email === 'admin@mfa.gov.gh' && password === 'password') {
-        setSuccess(true);
-        setTimeout(() => {
-          navigate('/admin/dashboard');
-        }, 2000);
-      } else {
-        throw new Error('Invalid login credentials.');
+      if (loginError) throw loginError;
+
+      if (!data.user) {
+        throw new Error('Authentication failed. Please try again.');
       }
+
+      // Verify the user has admin role
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', data.user.id)
+        .single();
+
+      if (profileError || !profile) {
+        await supabase.auth.signOut();
+        throw new Error('Could not verify your account role. Contact IT support.');
+      }
+
+      if (profile.role !== 'admin') {
+        await supabase.auth.signOut();
+        throw new Error('Unauthorized — this portal is for system administrators only.');
+      }
+
+      // Update last_login
+      await supabase
+        .from('profiles')
+        .update({ last_login: new Date().toISOString() })
+        .eq('id', data.user.id);
+
+      setSuccess(true);
+      setTimeout(() => {
+        navigate('/admin/dashboard');
+      }, 1500);
     } catch (err) {
       setError(err.message || 'Invalid login credentials.');
       setIsLoading(false);
@@ -65,7 +93,7 @@ const AdminAuthSection = () => {
                 {error ? 'Login unsuccessful' : 'Login successful'}
               </h3>
               <p className={`text-[12px] leading-tight ${error ? 'text-[#666666]' : 'text-green-700'}`}>
-                {error ? 'Incorrect email or password. Please try again.' : 'Redirecting to admin dashboard...'}
+                {error || 'Redirecting to admin dashboard...'}
               </p>
             </div>
             <button 

@@ -20,18 +20,46 @@ const OfficerAuthSection = () => {
     setSuccess(false);
 
     try {
-      // Simulate network request for dummy authentication
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      // Authenticate with Supabase
+      const { data, error: loginError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-      // Dummy credentials for development testing
-      if (email === 'test@mfa.gov.gh' && password === 'password') {
-        setSuccess(true);
-        setTimeout(() => {
-          navigate('/officer/dashboard');
-        }, 2000);
-      } else {
-        throw new Error('Invalid login credentials.');
+      if (loginError) throw loginError;
+
+      if (!data.user) {
+        throw new Error('Authentication failed. Please try again.');
       }
+
+      // Verify the user has an officer or director role
+      const { data: profile, error: profileError } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', data.user.id)
+        .single();
+
+      if (profileError || !profile) {
+        await supabase.auth.signOut();
+        throw new Error('Could not verify your account role. Contact IT support.');
+      }
+
+      const allowedRoles = ['officer', 'director'];
+      if (!allowedRoles.includes(profile.role)) {
+        await supabase.auth.signOut();
+        throw new Error('Unauthorized — this portal is for MOFA staff (Officers & Directors) only.');
+      }
+
+      // Update last_login
+      await supabase
+        .from('profiles')
+        .update({ last_login: new Date().toISOString() })
+        .eq('id', data.user.id);
+
+      setSuccess(true);
+      setTimeout(() => {
+        navigate('/officer/dashboard');
+      }, 1500);
     } catch (err) {
       setError(err.message || 'Invalid login credentials.');
       setIsLoading(false);
@@ -66,7 +94,7 @@ const OfficerAuthSection = () => {
                 {error ? 'Login unsuccessful' : 'Login successful'}
               </h3>
               <p className={`text-[12px] leading-tight ${error ? 'text-[#666666]' : 'text-green-700'}`}>
-                {error ? 'Incorrect email or password. Please try again.' : 'Redirecting to your dashboard...'}
+                {error || 'Redirecting to your dashboard...'}
               </p>
             </div>
             <button 
@@ -85,7 +113,7 @@ const OfficerAuthSection = () => {
           <div className="text-center mb-10">
             <h1 className="text-[#2a2a2a] text-[32px] font-bold mb-3 tracking-tight">Sign into your account</h1>
             <p className="text-[#6b7280] text-[14px] font-medium max-w-sm mx-auto leading-relaxed">
-              Use your MOFA government account. No separate<br />password required.
+              Use your MOFA government account credentials<br />to access the officer portal.
             </p>
           </div>
 

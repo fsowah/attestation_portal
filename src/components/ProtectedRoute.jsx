@@ -15,14 +15,31 @@ const ProtectedRoute = ({ children, allowedRole }) => {
   }
 
   if (!user) {
+    // Redirect to the appropriate login page based on the current route
+    if (location.pathname.startsWith('/admin')) {
+      return <Navigate to="/admin/login" state={{ from: location }} replace />;
+    }
+    if (location.pathname.startsWith('/officer')) {
+      return <Navigate to="/officer/login" state={{ from: location }} replace />;
+    }
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  if (allowedRole && profile?.role !== allowedRole) {
-    // If user is trying to access admin but is not admin, send to dashboard
-    // If user is trying to access user dashboard but is admin, maybe allow both? 
-    // Usually admins stay in admin portal.
-    return <Navigate to={profile?.role === 'admin' ? '/admin' : '/dashboard'} replace />;
+  // Normalize allowedRole to an array for comparison
+  const allowedRoles = Array.isArray(allowedRole) ? allowedRole : [allowedRole];
+  const userRole = profile?.role || 'user';
+
+  if (allowedRole && !allowedRoles.includes(userRole)) {
+    // Redirect to the correct portal for the user's actual role
+    switch (userRole) {
+      case 'admin':
+        return <Navigate to="/admin/dashboard" replace />;
+      case 'officer':
+      case 'director':
+        return <Navigate to="/officer/dashboard" replace />;
+      default:
+        return <Navigate to="/dashboard" replace />;
+    }
   }
 
   return children;

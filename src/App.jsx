@@ -34,18 +34,26 @@ function App() {
             <Route path="/" element={<Navigate to="/login" replace />} />
             <Route path="/login" element={<Login />} />
             
-            {/* Officer Routes */}
+            {/* Officer Routes — protected for officer & director roles */}
             <Route path="/officer/login" element={<OfficerLogin />} />
-            <Route path="/officer" element={<OfficerLayout />}>
+            <Route path="/officer" element={
+              <ProtectedRoute allowedRole={['officer', 'director']}>
+                <OfficerLayout />
+              </ProtectedRoute>
+            }>
               <Route path="dashboard" element={<OfficerDashboard />} />
               <Route path="submissions" element={<OfficerDashboard />} />
               <Route path="appointments" element={<OfficerAppointments />} />
               <Route index element={<Navigate to="submissions" replace />} />
             </Route>
 
-            {/* Admin Routes */}
+            {/* Admin Routes — protected for admin role */}
             <Route path="/admin/login" element={<AdminLogin />} />
-            <Route path="/admin" element={<AdminLayout />}>
+            <Route path="/admin" element={
+              <ProtectedRoute allowedRole={['admin']}>
+                <AdminLayout />
+              </ProtectedRoute>
+            }>
               <Route path="dashboard" element={<AdminDashboard />} />
               <Route path="config/slots" element={<SlotConfiguration />} />
               <Route path="config/blackout" element={<BlackoutDates />} />

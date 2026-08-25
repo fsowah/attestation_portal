@@ -55,8 +55,8 @@ const OfficerSubmissionsTable = ({ applications = [], isLoading = false, onRefre
   return (
     <div className="flex flex-col">
       {/* Controls: Tabs, Filters, Export */}
-      <div className="flex justify-between items-center mb-4">
-        <div className="flex gap-6">
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-4">
+        <div className="flex gap-4 md:gap-6 overflow-x-auto pb-1 -mx-4 px-4 md:mx-0 md:px-0">
           {tabs.map(tab => (
             <button 
               key={tab.name}
@@ -70,7 +70,7 @@ const OfficerSubmissionsTable = ({ applications = [], isLoading = false, onRefre
             </button>
           ))}
         </div>
-        <div className="flex gap-3">
+        <div className="flex gap-2 md:gap-3">
           <button className="flex items-center gap-2 px-4 py-2 border border-gray-200 rounded-lg text-[13px] font-bold text-gray-700 hover:bg-gray-50 bg-white shadow-sm">
             <Filter className="w-4 h-4" />
             Filters
@@ -147,8 +147,10 @@ const OfficerSubmissionsTable = ({ applications = [], isLoading = false, onRefre
         </div>
         
         {/* Pagination */}
-        <div className="flex justify-between items-center px-6 py-4 border-t border-gray-100 bg-white">
-          <span className="text-[12px] font-medium text-gray-500">Showing {filteredApplications.length > 0 ? 1 : 0}-{Math.min(10, filteredApplications.length)} out of {filteredApplications.length}</span>
+        <div className="flex flex-col sm:flex-row justify-between items-center gap-4 px-6 py-4 border-t border-gray-100 bg-white">
+          <span className="text-[12px] font-medium text-gray-500 text-center sm:text-left">
+            Showing {filteredApplications.length > 0 ? 1 : 0}-{Math.min(10, filteredApplications.length)} out of {filteredApplications.length}
+          </span>
           
           <div className="flex items-center gap-1">
             <button className="w-8 h-8 flex items-center justify-center rounded text-gray-400 hover:bg-gray-50">&lt;</button>
@@ -156,8 +158,8 @@ const OfficerSubmissionsTable = ({ applications = [], isLoading = false, onRefre
             <button className="w-8 h-8 flex items-center justify-center rounded text-gray-400 hover:bg-gray-50">&gt;</button>
           </div>
           
-          <div className="flex items-center gap-2">
-            <span className="text-[12px] font-medium text-gray-500">Items per page:</span>
+          <div className="flex items-center gap-2 justify-center sm:justify-end">
+            <span className="text-[12px] font-medium text-gray-500 hidden sm:inline">Items per page:</span>
             <select className="border border-gray-200 rounded px-2 py-1 text-[12px] font-bold text-gray-700 bg-white focus:outline-none">
               <option>10</option>
               <option>20</option>
