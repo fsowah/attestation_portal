@@ -11,10 +11,19 @@ import {
   Shield, 
   HeadphonesIcon, 
   FileText,
+  LogOut,
   X
 } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 const AdminSidebar = ({ isOpen, closeSidebar }) => {
+  const { signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    window.location.href = '/admin/login';
+  };
+
   return (
     <aside className={`bg-white border-r border-gray-200 flex flex-col shrink-0 h-full overflow-y-auto
       fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0
@@ -135,6 +144,17 @@ const AdminSidebar = ({ isOpen, closeSidebar }) => {
             Audit Logs
           </NavLink>
         </nav>
+      </div>
+
+      {/* Sign Out */}
+      <div className="mt-auto p-4 mb-4 border-t border-gray-200">
+        <button 
+          onClick={handleSignOut}
+          className="flex items-center gap-3 px-4 py-2.5 rounded-lg text-[13px] font-medium text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors text-left w-full"
+        >
+          <LogOut className="w-4 h-4" />
+          Sign Out
+        </button>
       </div>
     </aside>
   );
