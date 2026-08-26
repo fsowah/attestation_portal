@@ -1,8 +1,16 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, FileText, Calendar, BarChart2, CheckCircle, HeadphonesIcon, MessageSquare, X } from 'lucide-react';
+import { LayoutDashboard, FileText, Calendar, BarChart2, CheckCircle, HeadphonesIcon, MessageSquare, LogOut, X } from 'lucide-react';
+import { useAuth } from '../../../context/AuthContext';
 
 const OfficerSidebar = ({ isOpen, closeSidebar }) => {
+  const { signOut } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+    window.location.href = '/officer/login';
+  };
+
   return (
     <aside className={`bg-white border-r border-gray-200 flex flex-col shrink-0 h-full overflow-y-auto
       fixed inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out lg:relative lg:translate-x-0
@@ -84,6 +92,14 @@ const OfficerSidebar = ({ isOpen, closeSidebar }) => {
           <button className="flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium text-[#64748b] hover:bg-gray-50 transition-colors text-left w-full">
             <MessageSquare className="w-4 h-4" />
             Feedback
+          </button>
+          <div className="h-px bg-gray-200 my-2" />
+          <button 
+            onClick={handleSignOut}
+            className="flex items-center gap-3 px-3 py-2 rounded-lg text-[13px] font-medium text-red-500 hover:bg-red-50 hover:text-red-600 transition-colors text-left w-full"
+          >
+            <LogOut className="w-4 h-4" />
+            Sign Out
           </button>
         </nav>
       </div>
